@@ -1,0 +1,101 @@
+---
+title: "Flood Frequency Report"
+params: 
+ set_author: "test" 
+author: "`r params$set_author`"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    self_contained: false
+always_allow_html: true
+---
+
+```{r, echo=FALSE}
+
+   culvert_size <- function(x) {
+     ifelse(x < 11, "(24 in)", 
+            ifelse(x >= 11 & x < 30,"(36 in)", 
+                   ifelse(x >= 30 & x < 65,"(48 in)",
+                          ifelse(x >= 65 & x <110,"(60 in)",
+                                 ifelse(x >= 110 & x < 180,"(72 in)",
+                                        ifelse(x >= 180 & x < 290,"(84 in)",
+                                               ifelse(x >= 290 & x < 400,"(96 in)","(Bridge or Big Culvert!)")))))))}
+   
+ precipUpdate <- final_cul()$stats_usgs_cul %>% 
+      dplyr::filter(stringr::str_detect(description, "Mean Annual Precip"))
+    
+    daUpdate <- final_cul()$stats_usgs_cul  %>% 
+      dplyr::filter(stringr::str_detect(description, "Area that contributes flow to a point on a stream"))
+    
+    
+    forUpdate <- final_cul()$stats_usgs_cul  %>% 
+      dplyr::filter(stringr::str_detect(description, "Percentage of area covered by forest"))
+      
+togeth_sum_50 <- final_cul()$together_long %>% dplyr::filter(RI == 50, Method == "basin_char")%>% dplyr::summarise(mean = mean(value, na.rm = TRUE))
+
+
+
+togeth_sum_100 <- final_cul()$together_long %>% dplyr::filter(RI == 100, Method == "basin_char") %>% dplyr::summarise(mean = mean(value, na.rm = TRUE))
+```
+
+## Introduction
+
+This report is used to analyze the flood frequency and potential culvert sizing above <b>`r paste0(final_cul()$drain_name)`</b>. This is accomplished by generating geospatial parameters through opensource platforms like USGS Stream Stats (Ries III et al., 2017) and R (Team, R, 2020). Furthermore, in field observations (bankfull- and active channel-width) can be added to the analysis as well. The parameters generated via USGS Stream Stats are mean annual precipitation, percentage of forest and drainage area. These variables are then used in the calculations of flood frequency for USGS Regional Regression Estimate (USGS RRE) along with other methods like Omang, Parrett and Hull (1983) & Parrett and Johnson (2004). In addition to the basin characterstic methods (i.e., drainage area, precipitation, percent forested) there are methods by Omang, Parrett and Hull (1983) & Parrett and Johnson (2004) that take into account other variables like bankfull width and active channel width. Along with the flood frequency, calculations for culvert size are recommended using methods from American Iron, & Steel Institute (1983). This is used to assist with making decisions regarding flow and pipe size. Below is a summary of the findings followed by the suite of graphs and tables generated in this process.
+
+#### Quick Summary
+
+ `r paste0("<b>Drainage Area: </b>", paste(daUpdate$value, " sq.mi"),
+          "<br>","<b>Precipitation: </b>",paste(precipUpdate$value, " in."),
+          "<br>","<b>Forest Cover: </b>",paste(forUpdate$value, " %"),
+          "<br>", "<b>Basin Characteristics Avg 50 year: </b>", paste(scales::comma(togeth_sum_50$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<li>",  "Culvert Size Recommended (50 yr): ", paste(culvert_size(togeth_sum_50$mean)), "</li>","<b>Basin Characteristics Avg 100 year: </b>", paste(scales::comma(togeth_sum_100$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<br>","<li>",  "Culvert Size Recommended (100 yr): ", paste(culvert_size(togeth_sum_100$mean)), "</li>")`
+
+
+
+# Catchment Characteristics
+
+
+```{r, echo=FALSE, fig.align='center', fig.cap="Catchment Area (blue polygon) above selected Drain Point (red)", fig.pos="bottom"}
+knitr::include_graphics(final_cul()$customleaf)
+```
+
+The catchment characteristics are listed below in the table. Not all variables are used for flood frequency calculations but are added for the user to help capture the entire scope of the drainage. 
+
+```{r, echo=FALSE}
+
+final_cul()$stats_usgs_cul %>% dplyr::select(Description = description, Code = code, Unit = unit, Value = value) %>% kableExtra::kable(caption = paste0("Catchment Characteristics above selected point at ", final_cul()$drain_name)) %>%
+  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+This is the available flood frequency predictions for the catchment. 
+
+
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE, fig.align='center', fig.width=10, fig.height=5}
+p1 <- final_cul()$together_long %>% ggplot(aes(RI, value, color = source)) + geom_point() + geom_line() +
+  labs(x = "Return Interval", y = "Discharge (cfs)", title = paste0("Flood Frequency Estimates for ", final_cul()$drain_name)) + theme_bw() + facet_wrap(~Method)
+plotly::ggplotly(p1)
+```
+
+## Flood Frequency Tables
+
+Table below show the results from the calculations above using the USGS RRE, Omang, Parrett and Hull, and Parrett and Hull.
+
+```{r, echo=FALSE}
+final_cul()$together_long %>% dplyr::filter(RI %in% c(50,100)) %>% dplyr::select(`Return Interval` = ReturnInterval,Source = source, Method, Value = value, Size) %>% kableExtra::kable() %>%
+  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+
+
+
+## References
+
+American Iron, & Steel Institute. (1983). Handbook of steel drainage & highway construction products. American Iron and Steel Institute.
+
+Omang, R. J., Parrett, C., & Hull, J. A. (1986). Methods for estimating magnitude and frequency of floods in Montana based on data through 1983 (No. 86-4027). US Geological Survey.
+
+Parrett, C., & Johnson, D. R. (2004). Methods for estimating flood frequency in Montana based on data through water year 1998 (Vol. 3, No. 4308). US Department of the Interior, US Geological Survey.
+
+Ries III, K. G., Newson, J. K., Smith, M. J., Guthrie, J. D., Steeves, P. A., Haluska, T. L., ... & Vraga, H. W. (2017). StreamStats, version 4 (No. 2017-3046). US Geological Survey.
+
+Team, R. (2020). RStudio: Integrated development for R. RStudio Inc.(2015). Acknowledgements This work was supported by Fundação para a Ciência e Tecnologia (FCT), Azores.

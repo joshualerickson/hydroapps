@@ -1,0 +1,13 @@
+name: hydroapps
+title: hydroapps
+username:
+account: joshualerickson
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4295268
+bundleId: 4736384
+url: https://joshualerickson.shinyapps.io/hydroapps/
+when: 1624204803.63262
+lastSyncTime: 1624204803.63262
+asMultiple: FALSE
+asStatic: FALSE
