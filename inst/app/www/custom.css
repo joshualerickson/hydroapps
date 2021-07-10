@@ -1,1 +1,93 @@
-#ss_maps {cursor: crosshair !important;}
+@import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
+
+table.my-popup{ 
+  background:#000000;
+}
+
+table.my-popup tr:nth-child(even){ 
+  background:#ffffff;
+}
+
+table.my-popup tr:nth-child(odd){ 
+  background:#F4F6F6;
+}
+
+.leaflet-touch .leaflet-draw-draw-marker {
+  width: 50px;
+  background-color: #ADD8E6;
+  outline: 2px solid black;
+}
+
+
+.tabbable > .nav > li > a {
+    background-color: #ADD8E6;
+    outline: 2px solid black;
+    font-family: 'Yomogi', cursive;
+    font-size: 18px;
+    font-style: italic;
+    color: black;
+    border-bottom-color: #333;
+    border: black;
+    font-weight: bold;
+    border-width: thick;
+    margin-top: 10px;
+    margin-bottom: 2px;
+}
+
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+    -ms-touch-action: none;
+    touch-action: none;
+    border-color: black;
+}
+
+.btn-default {
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    outline: 2px solid black;
+    background-position: -120px -1px;
+    background-color: #ADD8E6;
+    border-color: black;
+    font-size: 16px;
+    font-family: 'Yomogi', cursive;
+    font-weight: bold;
+}
+
+label {
+    display: inline-block;
+    max-width: 100%;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: 700;
+    font-family: 'Yomogi', cursive;
+    font-weight: bold;
+}
+.btn-default:hover {
+    color: #333;
+    background-color: #fff;
+    border-color: black;
+    
+}
+
+.leaflet-touch .leaflet-control-layers-toggle {
+    width: 44px;
+    height: 44px;
+    background-color: #ADD8E6;
+    border-color: black;
+    outline: 2px solid black;
+}
+
+.leaflet-bar a {
+    background-color: #ADD8E6;
+    border-bottom: 1px solid #ccc;
+    border-color: black;
+    outline: 2px solid black;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: black;
+}

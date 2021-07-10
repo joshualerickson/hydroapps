@@ -47,22 +47,45 @@ mod_culvert_report_server <- function(input, output, session, ss_list){
     },
     
     content = function(file) {
-      src <- normalizePath('inst/app/www/report.Rmd')
+      if(input$format == 'HTML'){
+        
+        src <- normalizePath('inst/app/www/report.Rmd')
+        
+      } else {
+        
+        src <- normalizePath('inst/app/www/report_word.Rmd')
+        
+      }
+      
       
       # temporarily switch to the temp dir, in case you do not have write
       # permission to the current working directory
       owd <- setwd(tempdir())
       on.exit(setwd(owd))
+      if(input$format == 'HTML'){
       file.copy(src, 'report.Rmd', overwrite = TRUE)
-      
-      
-      out <- rmarkdown::render('report.Rmd',
+        
+         out <- rmarkdown::render('report.Rmd',
                     params = list(set_author = input$author),
                     
                     switch(
                       input$format,
                       HTML = rmarkdown::html_document(), Word = rmarkdown::word_document()
                     ))
+        
+      } else {
+        file.copy(src, 'report_word.Rmd', overwrite = TRUE)
+        
+        out <- rmarkdown::render('report_word.Rmd',
+                                 params = list(set_author = input$author),
+                                 
+                                 switch(
+                                   input$format,
+                                   HTML = rmarkdown::html_document(), Word = rmarkdown::word_document()
+                                 ))
+      }
+      
+     
       
       file.rename(out, file)
     }

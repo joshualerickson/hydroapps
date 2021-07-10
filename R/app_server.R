@@ -20,7 +20,7 @@ app_server <- function( input, output, session ) {
   
   observeEvent(input$shapefile,  {
     
-    print('shapefile')
+    
     shpdf <- input$shapefile
     
     if(is.null(shpdf)){
@@ -35,12 +35,23 @@ app_server <- function( input, output, session ) {
     setwd(previouswd)
     
     
-    map <- rgdal::readOGR(paste(uploaddirectory, shpdf$name[grep(pattern="*.shp$", shpdf$name)], sep="/"))#,  delete_null_obj=TRUE)
-    map <- sp::spTransform(map, sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+    # map <- rgdal::readOGR(paste(uploaddirectory, shpdf$name[grep(pattern="*.shp$", shpdf$name)], sep="/"))#,  delete_null_obj=TRUE)
+    # map <- sp::spTransform(map, sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+    # shape$dat <- map
+    
+    map <- rgdal::readOGR(paste(uploaddirectory, shpdf$name[grep(pattern="*.shp$", shpdf$name)], sep="/"))
+    
+    if(is.na(map@proj4string)) {
+      sp::proj4string(map) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+      map <- sp::spTransform(map, sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+    } else {
+      
+      map <- sp::spTransform(map, sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+    }
+    
     shape$dat <- map
     
-    
-    output$text <- renderText(shape$shape_id <- input$shape_id)
+    #output$text <- renderText(shape$shape_id <- input$shape_id)
   })
   
   observeEvent(input$shapefile, {
@@ -49,8 +60,7 @@ app_server <- function( input, output, session ) {
  
   callModule(mod_culvert_map_server, "culvert_map_ui_1", 
              ss_list = ss_list,
-             shape = shape,
-             shape_names = shape_names)
+             shape = shape)
   callModule(mod_culvert_peak_plot_server, "culvert_peak_plot_ui_1", 
              ss_list = ss_list,
              cul = cul)

@@ -9,7 +9,7 @@ base_map <- function () {
     sprintf("https://%s/arcgis/services/%s/MapServer/WmsServer", 
             host, service)
   }
-  map <- leaflet::leaflet()
+  map <- leaflet::leaflet() 
   map <- leaflet::addProviderTiles(map = map, provider = grp[[1]], 
                                    group = grp[[1]])
   map <- leaflet::addProviderTiles(map = map, provider = grp[[2]], 
@@ -49,6 +49,6 @@ modalFileInput <- function(failed = FALSE) {
               multiple = TRUE,
               accept = c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),
               buttonLabel = "Browse...", placeholder = "No file selected"),
-    textInput('shape_id', 'shape ID')
+    #textInput('shape_id', 'shape ID')
   )
 }

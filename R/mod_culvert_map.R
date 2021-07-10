@@ -10,30 +10,38 @@
 #' @importFrom magrittr "%>%"
 mod_culvert_map_ui <- function(id){
   ns <- NS(id)
-  tagList(tags$style(type = 'text/css',
-                     paste0('#', ns("ss_maps"),'{cursor: crosshair !important;}')),
-             leaflet::leafletOutput(ns("ss_maps"), width = "100%", height = "100%"),
+  tagList(leaflet::leafletOutput(ns("ss_maps"), width = "100%", height = "100%"),
              DT::dataTableOutput(ns("ss_table"))
   )
-  
 }
     
 #' culvert_map Server Function
 #'
 #' @noRd 
-mod_culvert_map_server <- function(input, output, session, ss_list, shape, shape_names){
+mod_culvert_map_server <- function(input, output, session, ss_list, shape){
   ns <- session$ns
   
   output$ss_maps <- leaflet::renderLeaflet({
     
-    base_map() %>%
-      leaflet::setView(lat = 48.91167, lng = -114.90246, zoom = 4) %>% 
+    base_map() %>% 
+      leaflet::setView(lat = 48.91167, lng = -114.90246, zoom = 7) %>% 
+      leaflet::addControl(html = actionButton('shape', 'add shapefile'),layerId = 'shape_but', className = 'btn-cust') %>% 
       leaflet.extras::addDrawToolbar(
-        targetGroup = "drain_points", markerOptions = T, polylineOptions = F, circleOptions = F,circleMarkerOptions = F,
+        targetGroup = "drain_points",
+        markerOptions = leaflet.extras::drawMarkerOptions(markerIcon = leaflet::makeAwesomeIcon('tint', library = 'fa')),
+        polylineOptions = F, circleOptions = F,circleMarkerOptions = F,
                                      rectangleOptions = F,
-                                     polygonOptions = F) %>%
-      leaflet::addControl(html = actionButton('shape', 'add shapefile'),layerId = 'shape_but', className = 'btn')
-    
+                                     polygonOptions = F)  %>%
+      leaflet::addMiniMap(tiles = 'Esri.WorldImagery', toggleDisplay = TRUE,
+                 position = "bottomleft") %>%
+      htmlwidgets::onRender("
+    function(el, x) {
+      var myMap = this;
+      myMap.on('baselayerchange',
+        function (e) {
+          myMap.minimap.changeLayer(L.tileLayer.provider(e.name));})
+
+    }")  
   })
   
   lf_prox <- leaflet::leafletProxy("ss_maps")
@@ -41,7 +49,7 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape, shape
     
     if(class(shape$dat)[[1]] %in% "SpatialPolygonsDataFrame") {
     
-      lf_prox %>% leaflet::addPolygons(data = shape$dat, group = 'user_shape',popup =  leafpop::popupTable(shape$dat)) %>%
+      lf_prox %>% leaflet::addPolygons(data = shape$dat, group = 'user_shape',popup =  leafpop::popupTable(shape$dat, className = 'my-popup')) %>%
         leaflet::addLayersControl(overlayGroups = c('Hydrography','user_shape','poly', 'drain_points'), baseGroups = c("Esri.WorldImagery",
                                                                                                           "CartoDB.Positron",
                                                                                                           "OpenStreetMap",
@@ -51,7 +59,7 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape, shape
     } else if (class(shape$dat)[[1]] %in% 'SpatialPointsDataFrame'){
       
       
-      lf_prox %>% leaflet::addMarkers(data = shape$dat, group = 'user_shape',popup =  leafpop::popupTable(shape$dat)) %>%
+      lf_prox %>% leaflet::addMarkers(data = shape$dat, group = 'user_shape',popup =  leafpop::popupTable(shape$dat, className = 'my-popup')) %>%
         leaflet::addLayersControl(overlayGroups = c('Hydrography','user_shape','poly', 'drain_points'), baseGroups = c("Esri.WorldImagery",
                                                                                                           "CartoDB.Positron",
                                                                                                           "OpenStreetMap",
@@ -60,7 +68,7 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape, shape
       
     } else if (class(shape$dat)[[1]] %in% 'SpatialLinesDataFrame'){
       
-      lf_prox %>% leaflet::addPolylines(data = shape$dat,group = 'user_shape',popup =  leafpop::popupTable(shape$dat)) %>%
+      lf_prox %>% leaflet::addPolylines(data = shape$dat,group = 'user_shape',popup =  leafpop::popupTable(shape$dat, className = 'my-popup')) %>%
         leaflet::addLayersControl(overlayGroups = c('Hydrography','user_shape','poly', 'drain_points'), baseGroups = c("Esri.WorldImagery",
                                                                                                           "CartoDB.Positron",
                                                                                                           "OpenStreetMap",

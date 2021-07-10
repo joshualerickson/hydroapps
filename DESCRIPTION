@@ -25,6 +25,7 @@ Imports:
     leafpop,
     magrittr,
     mapview,
+    officedown,
     pkgload,
     plotly,
     plyr,
