@@ -80,6 +80,29 @@ table.my-popup tr:nth-child(odd){
     font-weight: bold;
 }
 
+
+.btn-modal {
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    /* outline: 2px solid black; */
+    /* background-position: 120px 1px; */
+    /* background-color: #fff; */
+    /* border-color: black; */
+    font-size: 16px;
+    font-family: 'Yomogi', cursive;
+    font-weight: bold;
+    width: 60px;
+    position: right;
+    /* margin-right: 25px; */
+    margin-right: -10px;
+    margin-left: 663px;
+    margin-top: 10px;
+    
+}
+
+
 label {
     display: inline-block;
     max-width: 100%;
@@ -116,4 +139,19 @@ label {
     text-align: center;
     text-decoration: none;
     color: black;
+}
+
+.body-methods {
+    font-family: 'Yomogi', cursive;
+    font-weight: bold;
+    font-size: 22px;
+    line-height: 1.42857143;
+    color: #333;
+    background-color: #fff;
+    overflow: auto;
+}
+
+.modal-body {
+    height: 800px;
+    overflow: auto;
 }

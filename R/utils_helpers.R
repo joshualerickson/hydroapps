@@ -1,3 +1,5 @@
+#generic leaflet map with layers
+
 base_map <- function () {
   grp <- c("Esri.WorldImagery", "CartoDB.Positron", 
            "OpenStreetMap", "CartoDB.DarkMatter", "OpenTopoMap", 
@@ -31,7 +33,7 @@ base_map <- function () {
                                       proj4string = "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 }
 
-
+#if else used to give a size for culvert
 culvert_size <- function(x) {
   ifelse(x < 11, "(24 in)",
          ifelse(x >= 11 & x < 30,"(36 in)",
@@ -41,7 +43,7 @@ culvert_size <- function(x) {
                                      ifelse(x >= 180 & x < 290,"(84 in)",
                                             ifelse(x >= 290 & x < 400,"(96 in)","(Bridge or Big Culvert!)")))))))}
 
-
+#function used to add file input in modal
 modalFileInput <- function(failed = FALSE) {
   
   modalDialog(
@@ -52,3 +54,7 @@ modalFileInput <- function(failed = FALSE) {
     #textInput('shape_id', 'shape ID')
   )
 }
+
+
+#function used to filter through different names but same result
+

@@ -32,14 +32,14 @@ mod_culvert_plotly_server <- function(input, output, session, cul, ss_list, peak
   observeEvent(ss_list$stats,{
     
     precipUpdate <- ss_list$stats %>%
-      dplyr::filter(stringr::str_detect(description, "Mean Annual Precip"))
+      dplyr::filter(stringr::str_detect(code, "PRECIP"))
     
     daUpdate <- ss_list$stats %>%
-      dplyr::filter(stringr::str_detect(description, "Area that contributes flow to a point on a stream"))
+      dplyr::filter(stringr::str_detect(code, "DRNAREA|CONTDA"))
     
     
     forUpdate <- ss_list$stats %>%
-      dplyr::filter(stringr::str_detect(description, "Percentage of area covered by forest"))
+      dplyr::filter(stringr::str_detect(code, 'FOREST|CANOPY_PCT'))
     
     # This will change the value of input$inText, based on x
     updateTextInput(session, "precip_drain", value = precipUpdate$value)

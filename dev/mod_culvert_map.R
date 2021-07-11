@@ -216,9 +216,9 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
         leaflet::addPolygons(data = ss_list$df_poly,
                              popup = paste0(
           "<p style=line-height:30px;margin:0px;>",
-          "<b>Drainage Area: </b>", paste(ss_list$df_poly$CONTDA, " sq.mi"),
+          "<b>Drainage Area: </b>", paste(ss_list$df_poly %>% sf::st_drop_geometry() %>% dplyr::select(dplyr::matches(c('DRNAREA', 'CONTDA'))), " sq.mi"),
           "<br>","<b>Precipitation: </b>",ss_list$df_poly$PRECIP,
-          "<br>","<b>Forest (per): </b>",ss_list$df_poly$FOREST,
+          "<br>","<b>Forest (per): </b>",ss_list$df_poly %>% sf::st_drop_geometry() %>% dplyr::select(dplyr::matches(c('FOREST', 'CANOPY_PCT'))),
           "<br>","<b>Temperature: </b>",ss_list$df_poly$TEMP,
           "<br>","<b>Max Elevation: </b>",ss_list$df_poly$ELEVMAX,
           "<br>","<b>Slope abv 30% (per): </b>",ss_list$df_poly$SLOP30_30M,
@@ -226,7 +226,7 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
         leaflet::addLayersControl(overlayGroups = c("poly", "Hydrography",'user_shape', 'drain_points'),
                                   baseGroups = c("Esri.WorldImagery", "CartoDB.Positron", 
                                   "OpenStreetMap", "CartoDB.DarkMatter", "OpenTopoMap"))
-       
+      
        
       } else {
         
@@ -249,9 +249,9 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
         leaflet::addPolygons(data = ss_list$df_poly,
                              popup = paste0(
                                "<p style=line-height:30px;margin:0px;>",
-                               "<b>Drainage Area: </b>", paste(ss_list$df_poly$CONTDA, " sq.mi"),
+                               "<b>Drainage Area: </b>", paste(ss_list$df_poly %>% sf::st_drop_geometry() %>% dplyr::select(dplyr::matches(c('DRNAREA', 'CONTDA'))), " sq.mi"),
                                "<br>","<b>Precipitation: </b>",ss_list$df_poly$PRECIP,
-                               "<br>","<b>Forest (per): </b>",ss_list$df_poly$FOREST,
+                               "<br>","<b>Forest (per): </b>",ss_list$df_poly %>% sf::st_drop_geometry()%>% dplyr::select(dplyr::matches(c('FOREST', 'CANOPY_PCT'))),
                                "<br>","<b>Temperature: </b>",ss_list$df_poly$TEMP,
                                "<br>","<b>Max Elevation: </b>",ss_list$df_poly$ELEVMAX,
                                "<br>","<b>Slope abv 30% (per): </b>",ss_list$df_poly$SLOP30_30M,
