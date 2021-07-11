@@ -4,7 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_server <- function( input, output, session ) {
+app_server_ss <- function( input, output, session ) {
   # List the first level callModules here
   
   ss_list <- reactiveValues()
@@ -57,6 +57,23 @@ app_server <- function( input, output, session ) {
   observeEvent(input$shapefile, {
     removeModal()
   })
+  
+  observeEvent(input$button, {
+    showModal(modalDialog(
+      title = "Title",
+      HTML('<img src="https://media.giphy.com/media/3o72FkiKGMGauydfyg/giphy.gif"/>'),
+      easyClose = TRUE,
+      footer = NULL,
+      actionButton('dis', 'Done')
+    ))
+    
+  })
+  
+  observeEvent(input$dis, {
+    removeModal()
+  })
+  
+  
  
   callModule(mod_culvert_map_server, "culvert_map_ui_1", 
              ss_list = ss_list,

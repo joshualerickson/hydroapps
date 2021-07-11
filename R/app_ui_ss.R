@@ -4,7 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
-app_ui <- function(request) {
+app_ui_ss <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),

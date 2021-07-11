@@ -10,8 +10,8 @@
 #' @importFrom magrittr "%>%"
 mod_culvert_map_ui <- function(id){
   ns <- NS(id)
-  tagList(leaflet::leafletOutput(ns("ss_maps"), width = "100%", height = "100%"),
-             DT::dataTableOutput(ns("ss_table"))
+  tagList(leaflet::leafletOutput(ns("ss_maps"), width = '100%', height = '100%'),
+          DT::dataTableOutput(ns("ss_table"))
   )
 }
     
@@ -25,7 +25,9 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
     
     base_map() %>% 
       leaflet::setView(lat = 48.91167, lng = -114.90246, zoom = 7) %>% 
-      leaflet::addControl(html = actionButton('shape', 'add shapefile'),layerId = 'shape_but', className = 'btn-cust') %>% 
+      leaflet::addControl(html = tags$div(title = 'click to add shapefile',actionButton('shape', 'add shapefile')),layerId = 'shape_but', className = 'btn-cust') %>% 
+      leaflet::addControl(html = tags$div(title = 'help',actionButton('button', 'get help')),layerId = 'help', className = 'btn-cust') %>% 
+      
       leaflet.extras::addDrawToolbar(
         targetGroup = "drain_points",
         markerOptions = leaflet.extras::drawMarkerOptions(markerIcon = leaflet::makeAwesomeIcon('tint', library = 'fa')),

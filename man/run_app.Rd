@@ -4,9 +4,11 @@
 \alias{run_app}
 \title{Run the Shiny Application}
 \usage{
-run_app(...)
+run_app(app, ...)
 }
 \arguments{
+\item{app}{A \code{character} indicating what app to run.}
+
 \item{...}{A series of options to be used inside the app.}
 }
 \description{

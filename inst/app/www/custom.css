@@ -11,16 +11,42 @@ table.my-popup tr:nth-child(even){
 table.my-popup tr:nth-child(odd){ 
   background:#F4F6F6;
 }
+.modal-body { 
+  height:800px
+}
+
+.modal-content {
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #999;
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: 6px;
+    -webkit-box-shadow: 0 3px 9px rgb(0 0 0 / 50%);
+    box-shadow: 0 3px 9px rgb(0 0 0 / 50%);
+    outline: 0;
+    width: 1600px;
+}
+.modal-dialog {
+    width: max-content;
+    margin: 10px;
+    margin-left: 100px;
+    margin-right: 100px;
+}
 
 .leaflet-touch .leaflet-draw-draw-marker {
   width: 50px;
-  background-color: #ADD8E6;
   outline: 2px solid black;
+  background-color: #50acec;
 }
 
+.btn-default:hover {
+    color: #333;
+    background-color: #f4f4f4;
+    border-color: black;
+}
 
 .tabbable > .nav > li > a {
-    background-color: #ADD8E6;
+    background-color: #fff;
     outline: 2px solid black;
     font-family: 'Yomogi', cursive;
     font-size: 18px;
@@ -47,7 +73,7 @@ table.my-popup tr:nth-child(odd){
     border-top-right-radius: 2px;
     outline: 2px solid black;
     background-position: -120px -1px;
-    background-color: #ADD8E6;
+    background-color: #fff;
     border-color: black;
     font-size: 16px;
     font-family: 'Yomogi', cursive;
@@ -73,13 +99,13 @@ label {
 .leaflet-touch .leaflet-control-layers-toggle {
     width: 44px;
     height: 44px;
-    background-color: #ADD8E6;
+    background-color: #fff;
     border-color: black;
     outline: 2px solid black;
 }
 
 .leaflet-bar a {
-    background-color: #ADD8E6;
+    background-color: #fff;
     border-bottom: 1px solid #ccc;
     border-color: black;
     outline: 2px solid black;
