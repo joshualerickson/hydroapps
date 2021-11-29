@@ -240,8 +240,8 @@ mod_snotel_server <- function(input, output, session, values){
   # These render the .html files for the modal
   output$frame <- renderUI({
     
-    html_path <- base64enc::dataURI(system.file('app/www', 'snotel_stats.html', package = 'hydroapps'),
-                                    mime = 'text/html')
+    html_path <- system.file('app/www', 'snotel_stats.html', package = 'hydroapps')
+    html_path <- file.copy(html_path, 'snotel_stats.html', overwrite = TRUE)
     stats_html <-  tags$iframe(src=html_path, height=600, width=1248,frameBorder="0")
     stats_html
   })
