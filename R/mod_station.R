@@ -208,7 +208,8 @@ mod_station_server <- function(input, output, session, values){
   # These render the .html files for the modal
   output$frame <- renderUI({
     
-    html_path <- paste0(normalizePath(system.file('app/www', 'usgs_stats.html', package = 'hydroapps')))
+    html_path <- base64enc::dataURI(file = system.file('app/www', 'usgs_stats.html', package = 'hydroapps'),
+                                    mime = 'text/html')
     stats_html <-  tags$iframe(src=html_path, height=600, width=1248,frameBorder="0")
     stats_html
   })
@@ -224,7 +225,8 @@ mod_station_server <- function(input, output, session, values){
   
   output$peak_rep <- renderUI({
     
-    freq_path <- normalizePath(system.file('app/www', 'peak_rep.html', package = 'hydroapps'))
+    freq_path <- base64enc::dataURI(file = system.file('app/www', 'peak_rep.html', package = 'hydroapps'),
+                                    mime = 'text/html')
     freq_html <- tags$iframe(src=freq_path, height=200, width = 1248, frameBorder='0')
     freq_html
     
