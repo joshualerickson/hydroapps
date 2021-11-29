@@ -1,0 +1,22 @@
+---
+title: ''
+output: 
+  html_document:
+    self_contained: false
+always_allow_html: true
+---
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12pt;
+    line-height: 1.42857143;
+    color: #333;
+    background-color: #fff;
+    overflow: auto;
+}
+</style>
+
+<br>
+It is important to note that the maximum flows will use the daily mean maximum if the month is filtered, e.g. maximum flow uses dataRetrieval::readNWISpeak(), which are QC'd instantaneous maximum flows, when **all** months are specified (1:12) otherwise using daily **mean** maximum flow.  

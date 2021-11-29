@@ -1,0 +1,528 @@
+---
+title: "SWE Report for SNOTEL Station: <br> <span style='color: black; font-size: 30px'> `r paste0(snotel_ggplot_data_not_filtered() %>% dplyr::slice(n=1) %>% .$site_name)`</span>"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    self_contained: false
+always_allow_html: true
+---
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12pt;
+    line-height: 1.42857143;
+    color: #333;
+    background-color: #fff;
+    overflow: auto;
+}
+</style>
+```{r, include=F}
+knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(kableExtra)
+library(scales)
+library(plotly)
+thematic::thematic_on(font = 'Montserrat')
+```
+
+```{r echo=FALSE, warning=F, message=F, error=F}
+
+one_row <- snotel_ggplot_data_not_filtered() %>% slice(n=1)
+
+month_station <- lubridate::as_date(Sys.Date()) %>% lubridate::month()
+
+year_station <- lubridate::as_date(Sys.Date()) %>% lubridate::year()
+
+day_station <- lubridate::as_date(Sys.Date()) %>% lubridate::day()
+
+summary_stats_month <- snotel_ggplot_data_not_filtered()  %>% 
+  group_by(site_name, month_abb) %>% 
+  summarise(quantiles = quantile(snow_water_equivalent, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
+                                                                  0.75,0.80, 0.90, 0.95), na.rm = TRUE),
+            breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
+                        "p80_va", "p90_va", "p95_va")) %>% 
+  pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
+  right_join(snotel_ggplot_data_not_filtered(), by = c("site_name", "month_abb")) %>% 
+  mutate(across(contains("_va"), round, 1)) %>% 
+  ungroup() %>% 
+  group_by(month_abb) %>% slice(n=1) %>% ungroup()
+
+summary_stats_day <- snotel_ggplot_data_not_filtered() %>% 
+  group_by(site_name, month_day) %>% 
+  summarise(quantiles = quantile(snow_water_equivalent, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
+                                                                  0.75,0.80, 0.90, 0.95), na.rm = TRUE),
+            breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
+                        "p80_va", "p90_va", "p95_va")) %>% 
+  pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
+  right_join(snotel_ggplot_data_not_filtered(), by = c("site_name", "month_day")) %>% 
+  mutate(across(contains("_va"), round, 1)) %>% 
+  ungroup()
+
+hr_swe <- snotel_ggplot_data_not_filtered() %>% wildlandhydRo::hourlySNOTEL(days = 30)
+
+if(is.null(hr_swe)){
+hr_swe <- data.frame(date = as.Date("1799-12-01"),
+                       snow_water_equivalent = 0)
+}
+
+cur_hr <- hr_swe %>% slice_max(date)
+
+max_swe <- snotel_ggplot_data_not_filtered() %>% 
+  filter(month == month_station, day == day_station) %>% slice_max(snow_water_equivalent)
+
+
+min_swe <- snotel_ggplot_data_not_filtered() %>% 
+  filter(month == month_station, day == day_station) %>% 
+  slice_min(snow_water_equivalent)
+
+hr_swe <- hr_swe %>%  mutate(Date = lubridate::as_date(date, format = '%Y-%m-%d'))
+
+dv_report <- wildlandhydRo::reportSNOTELdv(snotel_ggplot_data_not_filtered(), days = 365) %>% 
+  mutate(Date = date) %>% 
+  dplyr::filter(!is.na(Date)) 
+
+dv_today <- dv_report %>% 
+  slice_max(Date) %>% 
+  dplyr::left_join(summary_stats_day %>% select(Date, contains('_va')), by = 'Date')
+
+dv_30 <- dv_report %>% dplyr::semi_join(hr_swe, by = 'Date') 
+
+joined_swes <- dplyr::left_join(hr_swe, summary_stats_day %>% select(Date, contains('_va')), by = 'Date') %>% 
+  dplyr::rename(`Current SWE` = 'snow_water_equivalent',`50th Percentile` = 'p50_va') %>% 
+  group_by(Date) %>% mutate(`Current SWE` = mean(`Current SWE`, na.rm=T)) %>% 
+  ungroup() %>% 
+  tidyr::pivot_longer(c(`Current SWE`,`50th Percentile`))
+
+joined_swe_long <- dplyr::left_join(dv_report, summary_stats_day %>% select(Date, contains('_va')), by = 'Date') %>% 
+  dplyr::rename(`Current SWE` = 'swe_current',`50th Percentile` = 'p50_va') %>% 
+  tidyr::pivot_longer(c(`Current SWE`,`50th Percentile`))
+
+last_swe <- joined_swes %>% group_by(name) %>% 
+  summarise(last = dplyr::last(value))
+
+dv_today <- dv_today %>% mutate(current_monthly_mean_swe = snotel_ggplot_data_not_filtered() %>% 
+                                  filter(month == month_station, year == year_station) %>% pull(snow_water_equivalent) %>% mean(),
+                                current_daily_mean_swe = hr_swe %>% 
+                                  filter(Date == lubridate::as_date(Sys.Date()) %>% lubridate::ymd()) %>% pull(snow_water_equivalent) %>% mean())
+
+```
+
+This report provides numerous Snow Water Equivalent (SWE) statistics at the Natural Resources and Conservation Service (NRCS) SNOTEL station <b>`r paste0(snotel_ggplot_data_not_filtered() %>% dplyr::slice(n=1) %>% .$site_name)`</b>. This is accomplished by generating site statistics through opensource platforms like the [NRCS Report Generator API](https://wcc.sc.egov.usda.gov/reportGenerator/) and R (Team, R, 2021). The idea is to give a brief summary of the station (summary stats) and then the user can look through other tabs (SWE graph, time series, SWE duration curve, frequency) for deeper analysis.  
+
+From the NRCS website, "Snow Water Equivalent, or SWE, is a commonly used measurement used by hydrologists and water managers to gage the amount of liquid water contained within the snowpack. In other words, it is the amount of water that will be released from the snowpack when it melts." (find more info [here](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/null/?cid=nrcseprd1314833)) 
+
+<span style = "color: red;"><b>
+`r ifelse(as.Date(Sys.Date()) %in% as.Date(cur_hr$date),'', paste0('Warning: API returned an NA value for instantaneous reading.'))`
+</b></span>
+<br>
+
+::: {style="display: flex;"}
+::: {style="flex-basis: 40%;"}
+#### **Quick Summary**
+`r paste0("<b>Station Name: </b>", paste(one_row$site_name),           "<br>","<b>Elevation: </b>", paste(round(one_row$elev*3.28084,0), " ft"),           "<br>","<b>Site #: </b>",paste(one_row$site_id), "<br>", "<b>Current SWE (instantaneous): </b>", ifelse(as.Date(Sys.Date()) %in% as.Date(cur_hr$date),paste(round(cur_hr$snow_water_equivalent, 2), " (in)"), paste('NA')), "<br>", "<b>Current SWE (mean): </b>", paste(round(dv_today$current_daily_mean_swe, 2), " (in)"),"<br>", "<b>Current Monthly SWE (mean): </b>", paste(round(dv_today$current_monthly_mean_swe, 2), " (in)"), "<br>", "<b>Minimum SWE: </b>", paste(round(min_swe$snow_water_equivalent,2)[1], " (in)", ' (', min_swe$Date[1], ')'), "<br>", "<b>Maximum SWE: </b>", paste(round(max_swe$snow_water_equivalent,2)[1], " (in)", ' (', max_swe$Date[1], ') '), 
+"<br>", "<b>Average First Snow: </b>", ifelse(is.null(phenology()), paste('Insufficient Data'),paste0(as.Date(round(mean(phenology()$first_snow_acc, na.rm = T), 0), origin = '1970-01-01') %>% stringr::str_remove('1970-'))),
+"<br>", "<b>Average First Melt: </b>", ifelse(is.null(phenology()), paste('Insufficient Data'),paste0(as.Date(round(mean(phenology()$first_snow_melt, na.rm = T), 0), origin = '1970-01-01') %>% stringr::str_remove('1970-'))),
+"<br>", "<b>Period of Record: </b>", paste(min(snotel_ggplot_data_not_filtered()$Date), ' to ', max(snotel_ggplot_data_not_filtered()$Date)),
+"<br>", "<b>Years with Data < 355 days: </b>", paste(' ', snotel_ggplot_data_not_filtered() %>% dplyr::count(year) %>% dplyr::filter(n < 355) %>% tidyr::pivot_wider(names_from = n, values_from = year, names_glue = "count_{n}") %>% dplyr::mutate(years_missing = paste(unlist(.), collapse = ', ')) %>% dplyr::pull(years_missing)))`
+:::
+
+::: {style="flex-basis: 2%;"}
+:::
+
+::: {style="flex-basis: 68%;"}
+```{r, echo=FALSE, warning=F, message=F, error=F}
+
+if(!is.null(hr_swe)){
+  dv_today <- dv_today %>% select(Date, p05_va:p95_va)%>% dplyr::rename(`5 %` = p05_va,
+                                       `10 %` = p10_va,
+                                       `20 %` = p20_va,
+                                       `25 %` = p25_va,
+                                       `50 %` = p50_va,
+                                       `75 %` = p75_va,
+                                       `80 %` = p80_va,
+                                       `90 %` = p90_va,
+                                       `95 %` = p95_va)
+  dv_today_gt <- gt::gt(dv_today)
+
+dv_today_gt %>%
+  gt::tab_header(
+    title = gt::md("**Percentiles:**"),
+    subtitle = gt::md("**Daily Stats**")
+  ) %>% gt::fmt_missing(columns = vars(-Date)) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`5 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`10 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`20 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color =  "#006400", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`25 %`, `50 %`, `75 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`80 %`)
+    )
+  ) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`90 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`95 %`)
+    )
+  ) %>% 
+  gt::tab_options(table.border.top.style = 'none')
+
+} else {
+  
+  dv_today <- dv_today %>% dplyr::mutate(`Month-Day` = paste(month_station, '-', day)) %>% 
+    select(`Month-Day`, p05_va:p95_va)%>% dplyr::rename(`5 %` = p05_va,
+                                       `10 %` = p10_va,
+                                       `20 %` = p20_va,
+                                       `25 %` = p25_va,
+                                       `50 %` = p50_va,
+                                       `75 %` = p75_va,
+                                       `80 %` = p80_va,
+                                       `90 %` = p90_va,
+                                       `95 %` = p95_va)
+  dv_today_gt <- gt::gt(dv_today)
+
+dv_today_gt %>%
+  gt::tab_header(
+    title = gt::md("**Percentiles:**"),
+    subtitle = gt::md("**Daily Stats**")
+  ) %>% gt::fmt_missing(columns = vars(-`Month-Day`)) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`5 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`10 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`20 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color =  "#006400", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`25 %`, `50 %`, `75 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = `80 %`
+    )
+  ) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`90 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`95 %`)
+    )
+  ) %>% 
+  gt::tab_options(table.border.top.style = 'none')
+}
+
+  mv_stats <- summary_stats_month %>% filter(month == month_station) %>% 
+    dplyr::rename(Month = 'month') %>% 
+    select(Month, p05_va:p95_va)%>% dplyr::rename(`5 %` = p05_va,
+                                       `10 %` = p10_va,
+                                       `20 %` = p20_va,
+                                       `25 %` = p25_va,
+                                       `50 %` = p50_va,
+                                       `75 %` = p75_va,
+                                       `80 %` = p80_va,
+                                       `90 %` = p90_va,
+                                       `95 %` = p95_va)
+  mv_stats_gt <- gt::gt(mv_stats)
+
+mv_stats_gt %>%
+  gt::tab_header(
+    title = '',
+    subtitle = gt::md("**Monthly Stats**")
+  ) %>% gt::fmt_missing(columns = vars(-Month)) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`5 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`10 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`20 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color =  "#006400", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`25 %`, `50 %`, `75 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = `80 %`
+    )
+  ) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`90 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`95 %`)
+    )
+  ) %>% 
+  gt::tab_options(table.border.top.style = 'none')
+
+```
+:::
+:::  
+
+
+Below are some quick stats and graphs.  
+
+<span style = "color: red;"><b>
+`r ifelse(as.Date(Sys.Date()) %in% as.Date(cur_hr$date),'', paste0('Warning: API returned an NA value. Graph will try and show the most recent date (', as.Date(cur_hr$date), ')', ' where a measurement was collected'))`</b></span>
+
+<br>
+<center>
+```{r echo=F, message = F, warning=F,fig.align='center', error=F}
+if(is.null(hr_swe)){
+  
+  ggplot() + 
+  ggplot2::theme_bw() +
+  ggplot2::theme(axis.text.x = element_text(size = 10),
+                 axis.text.y = element_text(size = 10),
+                 legend.title = element_blank()) +
+  ggplot2::labs(title = 'No recent hourly data',
+                x = 'Date', y = 'SWE (in)')
+  
+} else {
+g <- ggplot(data = joined_swes, aes(Date, value, color = name, linetype = name)) + 
+  ggplot2::geom_line(size = 1, show.legend = T) + 
+  ggplot2::scale_linetype_manual(values = c('solid', 'dashed'),
+                                 labels = c('50th Percentile', 'Current SWE')) +
+  ggplot2::scale_color_manual(values = c('forestgreen', 'black'),
+                              labels = c('50th Percentile', 'Current SWE')) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(axis.text.x = element_text(size = 10),
+                 axis.text.y = element_text(size = 10),
+                 legend.title = element_blank()) +
+  ggplot2::labs(title = 'Last 30 days of SWE',
+                x = 'Date', y = 'SWE (in)')
+  
+plotly::ggplotly(g)
+}
+```
+</center>
+<br>
+<center>
+## **Daily Statistics**
+</center>
+```{r, echo=FALSE,warning=F, error=F, message=F,  fig.align='center', fig.height=5, fig.width=9}
+
+  
+  dv_rep <- wildlandhydRo::reportSNOTELdv(snotel_ggplot_data_not_filtered(),days = 3)
+  if(is.null(dv_rep)){
+    
+    
+  } else {
+    
+  
+  d_plot <-wildlandhydRo::plot_reportSNOTEL(dv_rep, time = 'daily','now') +
+    ggplot2::labs(y  = 'SWE', x = '', title = '') + 
+    ggplot2::scale_fill_manual(values = 'blue')+
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10.5),
+                   axis.title.x = ggplot2::element_blank(),
+        axis.text.y = ggplot2::element_text(size = 10.5),
+        strip.text = ggplot2::element_text(size = 10.5),
+        axis.title.y = ggplot2::element_blank(),
+        panel.spacing = unit(6, "lines"),
+        legend.position = 'none', plot.title = element_blank())
+   plotly::ggplotly(d_plot)
+  }
+ #  
+ # wildlandhydRo::plot_reportSNOTEL(dv_rep, time = 'daily') +
+ #   labs(y = 'SWE Percentage of Median') +
+ #    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 6.5),
+ #        axis.text.y = ggplot2::element_blank(),
+ #        axis.title.y = ggplot2::element_blank(),
+ #        legend.position = 'none',
+ #        plot.title = ggplot2::element_blank())
+ 
+```
+
+<br>
+<center>
+<h2>**Monthly Statistics**</h2>
+Percentage of median on the y-axis.
+</center>
+<br>
+```{r, echo=FALSE,warning=F, error=F, message=F, fig.align='center', fig.height=6, fig.width=10}
+  mv_rep <- wildlandhydRo::reportSNOTELmv(snotel_ggplot_data_not_filtered())
+
+  if(is.null(mv_rep)){
+    
+  } else {
+  m_plot <- wildlandhydRo::plot_reportSNOTEL(mv_rep, time = 'month') +
+  ggplot2::labs(title = '') +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 8.5),
+                   axis.title.x = ggplot2::element_blank(),
+        axis.text.y = ggplot2::element_text(size = 10.5,
+                                            margin = margin(t = 0, r = 20, b = 0, l = 0)),
+        strip.text = ggplot2::element_text(size = 10.5),
+        plot.title = ggplot2::element_text(size = 12.5),
+        axis.title.y = ggplot2::element_blank(),
+        plot.subtitle = ggplot2::element_text(size = 10.5),
+        legend.position = 'none') + 
+        ggplot2::scale_fill_manual(values = 'blue')
+
+plotly::ggplotly(m_plot)
+}
+# per_stuff_df <- snotel_ggplot_data_not_filtered() %>% 
+#                                   mutate(Flow = snow_water_equivalent,
+#                                                 Station = site_name,
+#                                                 Date = lubridate::as_date(Date))
+
+# plot_SNOTELdrought(per_stuff_df,
+#                                 rolln = 1, 
+#                                 startDate = max(per_stuff_df$Date)-90,
+#                                 endDate = max(per_stuff_df$Date)) +
+#   labs(y = 'SWE (in)')
+
+```
+<br>
+```{r, echo=F,warning=F, error=F, message=F, results='hide', fig.align='center', fig.height=6, fig.width=10}
+month_abb <- data.frame(month = seq(1,12,1), month_abb = month.abb)
+
+all_year <- snotel_ggplot_data_not_filtered()  %>% 
+  dplyr::add_count(year) %>% dplyr::filter(n > 355) 
+all_year %>% 
+group_by(wy) %>% 
+  slice_max(snow_water_equivalent) %>% 
+  slice(n=1) %>% 
+  mutate(month = lubridate::month(Date)) %>%
+  dplyr::count(month) %>% filter(!is.na(month)) %>%
+  dplyr::full_join(month_abb, by = 'month') %>%
+  dplyr::mutate(n = ifelse(is.na(n), 0, n)) %>%
+  dplyr::mutate(month_abb = factor(month_abb, month.abb)) %>%
+  ggplot(aes(month_abb, n, fill = month_abb)) +
+  ggplot2::geom_col(show.legend = F) +
+  ggplot2::scale_fill_manual(values = c("#798E87","#8C8971","#A0845B","#B48046",
+  "#C28340", "#C59758", "#C8AA70", "#CBBE88",  "#AEA77C", "#817A5D", "#554D3E","#29211F"))+
+  labs(x = 'Month', y = '# of Peak SWEs', title = 'Count of Peak SWE by Month') +
+  ggplot2::theme_bw()+
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10.5),
+                   axis.title.x = ggplot2::element_text(size = 10.5),
+        axis.text.y = ggplot2::element_text(size = 10.5),
+        strip.text = ggplot2::element_text(size = 10.5),
+        plot.title = ggplot2::element_text(size = 12.5),
+        axis.title.y = ggplot2::element_text(size = 10.5),
+        plot.subtitle = ggplot2::element_text(size = 10.5),
+        legend.position = 'none')
+```
+
+<br>
+<br>
+
+## References  
+
+R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.  
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>

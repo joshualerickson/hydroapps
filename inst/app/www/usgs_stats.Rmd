@@ -1,0 +1,520 @@
+---
+title: "Discharge Report for USGS Gauging Station: <br> <span style='color: black; font-size: 30px'> `r paste0(usgs_ggplot_data_not_filtered() %>% dplyr::slice(n=1) %>% .$Station)`</span>"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    self_contained: false
+always_allow_html: true
+---
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12pt;
+    line-height: 1.42857143;
+    color: #333;
+    background-color: #fff;
+    overflow: auto;
+}
+</style>
+```{r, include=F}
+knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(kableExtra)
+library(scales)
+thematic::thematic_on(font = 'Montserrat')
+```
+
+```{r echo=FALSE, warning=F, message=F, error=F}
+
+one_row <- usgs_ggplot_data_not_filtered() %>% slice(n=1)
+
+month_station <- lubridate::as_date(Sys.Date()) %>% lubridate::month()
+
+year_station <- lubridate::as_date(Sys.Date()) %>% lubridate::year()
+
+day_station <- lubridate::as_date(Sys.Date()) %>% lubridate::day()
+
+if(one_row$Station %in% 'Tobacco River near Eureka MT'){
+  
+  summary_stats <- usgs_ggplot_data_not_filtered()  %>% 
+  group_by(Station, month_abb) %>% 
+  summarise(quantiles = quantile(Flow, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
+                                                                  0.75,0.80, 0.90, 0.95), na.rm = TRUE),
+            breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
+                        "p80_va", "p90_va", "p95_va")) %>% 
+  pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
+  right_join(usgs_ggplot_data_not_filtered(), by = c("Station", "month_abb")) %>% 
+  mutate(across(contains("_va"), round, 1)) %>% 
+  ungroup() %>% 
+  group_by(month_abb) %>% slice(n=1) %>% ungroup()%>% 
+  mutate(across(p05_va:p95_va, round, 0))
+  max_flow <- nwis_sites_df %>% 
+  filter(month == month_station, day == day_station) %>% 
+  slice_max(Flow)
+
+  min_flow <- nwis_sites_df %>% 
+  filter(month == month_station, day == day_station) %>% 
+  slice_min(Flow)
+  
+dv_report <- nwis_sites_df %>% 
+  group_by(Station, month_day) %>% 
+  summarise(quantiles = quantile(Flow, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
+                                                                  0.75,0.80, 0.90, 0.95), na.rm = TRUE),
+            breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
+                        "p80_va", "p90_va", "p95_va")) %>% 
+  pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
+  right_join(nwis_sites_df, by = c("Station", "month_day")) %>% 
+  mutate(across(contains("_va"), round, 0)) %>% 
+  ungroup() %>% 
+  group_by(Station, month_day) %>% 
+    mutate(min_va = min_flow$Flow,
+           max_va = max_flow$Flow,
+           max_va_yr = lubridate::year(max_flow$Date),
+           min_va_yr = lubridate::year(min_flow$Date)) %>% 
+    ungroup()
+  
+  hr_flow <- nwis_sites_df %>% wildlandhydRo::hourlyUSGS(days = 30) 
+  
+  u_hour <- hr_flow %>% mutate(Date = lubridate::as_date(date), 
+        year = lubridate::year(Date), month = lubridate::month(Date), day = lubridate::day(Date), 
+        month_day = str_c(month, day, sep = "-")) %>% group_by(Station, 
+        month_day, Date) %>% summarise(current_daily_mean_flow = mean(value, 
+        na.rm = TRUE)) %>% 
+    ungroup() %>% 
+    dplyr::left_join(dv_report %>% dplyr::select(dplyr::contains('_va'), Date), by = 'Date') %>% 
+    dplyr::arrange(dplyr::desc(Date))
+  
+  u_hour[1,5:17] <- dv_report[1,] %>% dplyr::select(dplyr::contains('_va')) 
+  
+  cur_flow <- hr_flow %>% slice_max(date)
+  
+  hr_flow <- hr_flow %>%  mutate(Date = lubridate::as_date(date))
+  
+  dv_today <- u_hour %>% slice_max(Date)
+  
+  dv_30 <- u_hour %>% dplyr::semi_join(hr_flow, by = 'Date')
+  
+} else {
+  
+  usgs_st_m <- dataRetrieval::readNWISstat(one_row$site_no, 
+                                         parameterCd = "00060", statType = "mean", 
+                                         statReportType = "monthly")
+
+
+summary_stats <- usgs_st_m %>% 
+  dplyr::group_by(month = month_nu) %>% 
+  summarize(p95_va = quantile(mean_va, probs = 0.95, na.rm = TRUE), 
+            p90_va = quantile(mean_va, probs = 0.9, na.rm = TRUE), 
+            p80_va = quantile(mean_va, probs = 0.8, na.rm = TRUE), 
+            p75_va = quantile(mean_va, probs = 0.75, na.rm = TRUE), 
+            p50_va = quantile(mean_va, probs = 0.5, na.rm = TRUE), 
+            p25_va = quantile(mean_va, probs = 0.25, na.rm = TRUE), 
+            p20_va = quantile(mean_va, probs = 0.2, na.rm = TRUE), 
+            p10_va = quantile(mean_va, probs = 0.1, na.rm = TRUE), 
+            p05_va = quantile(mean_va, probs = 0.05, na.rm = TRUE)) %>% 
+  mutate(across(p05_va:p95_va, round, 0))
+
+dv_report <- wildlandhydRo::reportUSGSdv(usgs_ggplot_data_not_filtered(), days = 365) %>% dplyr::filter(!is.na(Date))
+
+
+  hr_flow <- usgs_ggplot_data_not_filtered() %>% wildlandhydRo::hourlyUSGS(days = 30)
+  
+  cur_flow <- hr_flow %>% slice_max(date)
+  
+  hr_flow <- hr_flow %>%  mutate(Date = lubridate::as_date(date))
+  
+  dv_today <- dv_report %>% slice_max(Date)
+  
+  dv_30 <- dv_report %>% dplyr::semi_join(hr_flow, by = 'Date')
+  }
+joined_flows <- dplyr::left_join(hr_flow, dv_30, by = 'Date') %>% 
+  dplyr::rename(`Current Flow` = 'value',`50th Percentile` = 'p50_va') %>% 
+  group_by(Date) %>% mutate(`Current Flow` = mean(`Current Flow`, na.rm=T)) %>% 
+  tidyr::pivot_longer(c(`Current Flow`,`50th Percentile`)) %>% ungroup()
+
+last_flow <- joined_flows %>% group_by(name) %>% 
+  summarise(last = dplyr::last(value))
+    
+  dv_today <- dv_today %>% mutate(current_monthly_mean_flow = usgs_ggplot_data_not_filtered() %>% 
+                                    filter(month == month_station, year == year_station) %>% pull(Flow) %>% mean())
+
+
+
+
+
+```
+
+This report provides numerous flow statistics at the USGS gauging station <b>`r paste0(one_row$Station)`</b>. This is accomplished by generating station statistics through opensource platforms like USGS {DataRetrieval} package (De Cicco et al., 2015) and R (Team, R, 2021). The idea is to give a brief summary of the station (summary stats) and then the user can look through other tabs (hydrograph, bfi, fdc, flood frequency) for deeper analysis.
+
+<br>
+
+::: {style="display: flex;"}
+::: {style="flex-basis: 40%;"}
+#### **Quick Summary**
+
+`r paste0("<b>Station Name: </b>", paste(one_row$Station),           "<br>","<b>Drainage Area: </b>", paste(one_row$drainage_area, " sq.mi"),           "<br>","<b>Site #: </b>",paste(one_row$site_no), "<br>", "<b>Current Flow (instantaneous): </b>", paste(round(cur_flow$value, 2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"), "<br>", "<b>Current Flow (mean): </b>", paste(round(dv_today$current_daily_mean_flow, 2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<br>", "<b>Current Monthly Flow (mean): </b>", paste(round(dv_today$current_monthly_mean_flow, 2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"), "<br>", "<b>Minimum Flow: </b>", paste(round(dv_today$min_va,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>", ' (', dv_today$min_va_yr, ')'), "<br>", "<b>Maximum Flow: </b>", paste(round(dv_today$max_va,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>", ' (', dv_today$max_va_yr, ')'), "<br>", "<b>Period of Record: </b>", paste(min(usgs_ggplot_data_not_filtered()$Date), ' to ', max(usgs_ggplot_data_not_filtered()$Date)),
+"<br>", "<b>Years with Data < 355 days: </b>", paste(' ', usgs_ggplot_data_not_filtered() %>% dplyr::count(year) %>% dplyr::filter(n < 355) %>% tidyr::pivot_wider(names_from = n, values_from = year, names_glue = "count_{n}") %>% dplyr::mutate(years_missing = paste(unlist(.), collapse = ', ')) %>% dplyr::pull(years_missing)))`
+:::
+
+::: {style="flex-basis: 2%;"}
+:::
+
+::: {style="flex-basis: 68%;"}
+```{r, echo=FALSE, warning=F, message=F, error=F}
+
+if(!is.null(hr_flow)){
+  dv_today <- dv_today %>% select(Date, p05_va:p95_va)%>% dplyr::rename(`5 %` = p05_va,
+                                       `10 %` = p10_va,
+                                       `20 %` = p20_va,
+                                       `25 %` = p25_va,
+                                       `50 %` = p50_va,
+                                       `75 %` = p75_va,
+                                       `80 %` = p80_va,
+                                       `90 %` = p90_va,
+                                       `95 %` = p95_va)
+  dv_today_gt <- gt::gt(dv_today)
+
+dv_today_gt %>%
+  gt::tab_header(
+    title = gt::md("**Percentiles:**"),
+    subtitle = gt::md("**Daily Stats**")
+  ) %>% gt::fmt_missing(columns = vars(-Date)) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`5 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`10 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`20 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color =  "#006400", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`25 %`, `50 %`, `75 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`80 %`)
+    )
+  ) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`90 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`95 %`)
+    )
+  ) %>% 
+  gt::tab_options(table.border.top.style = 'none')
+
+} else {
+  
+  dv_today <- dv_today %>% dplyr::mutate(`Month-Day` = paste(month_station, '-', day)) %>% 
+    select(`Month-Day`, p05_va:p95_va)%>% dplyr::rename(`5 %` = p05_va,
+                                       `10 %` = p10_va,
+                                       `20 %` = p20_va,
+                                       `25 %` = p25_va,
+                                       `50 %` = p50_va,
+                                       `75 %` = p75_va,
+                                       `80 %` = p80_va,
+                                       `90 %` = p90_va,
+                                       `95 %` = p95_va)
+  dv_today_gt <- gt::gt(dv_today)
+
+dv_today_gt %>%
+  gt::tab_header(
+    title = gt::md("**Percentiles:**"),
+    subtitle = gt::md("**Daily Stats**")
+  ) %>% gt::fmt_missing(columns = vars(-`Month-Day`)) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`5 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`10 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`20 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color =  "#006400", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`25 %`, `50 %`, `75 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = `80 %`
+    )
+  ) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`90 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`95 %`)
+    )
+  ) %>% 
+  gt::tab_options(table.border.top.style = 'none')
+}
+
+  mv_stats <- summary_stats %>% filter(month == month_station) %>% 
+    dplyr::rename(Month = 'month') %>% 
+    select(Month, p05_va:p95_va)%>% dplyr::rename(`5 %` = p05_va,
+                                       `10 %` = p10_va,
+                                       `20 %` = p20_va,
+                                       `25 %` = p25_va,
+                                       `50 %` = p50_va,
+                                       `75 %` = p75_va,
+                                       `80 %` = p80_va,
+                                       `90 %` = p90_va,
+                                       `95 %` = p95_va)
+  mv_stats_gt <- gt::gt(mv_stats)
+
+mv_stats_gt %>%
+  gt::tab_header(
+    title = '',
+    subtitle = gt::md("**Monthly Stats**")
+  ) %>% gt::fmt_missing(columns = vars(-Month)) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`5 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`10 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`20 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color =  "#006400", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`25 %`, `50 %`, `75 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFFF00", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = `80 %`
+    )
+  ) %>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FFA500", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`90 %`)
+    )
+  )%>% 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#FF0000", alpha = 0.5)
+      ),
+    locations = gt::cells_body(
+      columns = c(`95 %`)
+    )
+  ) %>% 
+  gt::tab_options(table.border.top.style = 'none')
+
+```
+:::
+:::
+<br>
+<center>
+```{r echo=F, message = F, warning=F,fig.align='center',  error=F}
+if(!is.null(hr_flow)){
+g<-ggplot(data = joined_flows, aes(Date, value, color = name)) + 
+  ggplot2::geom_line(size = 1, show.legend = F) + 
+  scale_color_manual(values = c('forestgreen', 'black')) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10)) +
+  ggplot2::labs(title = 'Last 30 days of flow',
+                x = 'Date', y = 'Discharge (cfs)')
+plotly::ggplotly(g)
+} else {
+  ggplot() + 
+  ggplot2::geom_line() + 
+  ggplot2::theme_bw() +
+  ggplot2::theme(axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10)) +
+  ggplot2::labs(title = 'Historic Data; No Current Flows',
+                x = 'Date', y = 'Discharge (cfs)')
+}
+
+```
+</center>
+<br>
+
+```{r, echo=FALSE,warning=F, error=F, message=F, results='hide', fig.align='center', fig.height=6, fig.width=10}
+if(dv_report[1,]$Station %in% 'Tobacco River near Eureka MT'){
+
+  wildlandhydRo::plot_USGSdrought(usgs_ggplot_data_not_filtered(),
+                                rolln = 1, 
+                                startDate = max(usgs_ggplot_data_not_filtered()$Date)- 365,
+                                endDate = max(usgs_ggplot_data_not_filtered()$Date)) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
+        axis.text.y = ggplot2::element_text(size = 10))
+ 
+} else {
+  
+  wildlandhydRo::plot_reportUSGS(dv_report) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
+        axis.text.y = ggplot2::element_text(size = 10))
+}
+
+```
+
+<br>
+
+```{r,fig.align='center', echo=F}
+month_abb <- data.frame(month = seq(1,12,1), month_abb = month.abb)
+usgs_ggplot_data_not_filtered() %>% wildlandhydRo::wyUSGS() %>% 
+  mutate(month = lubridate::month(peak_dt)) %>% 
+  dplyr::count(month) %>% filter(!is.na(month)) %>% 
+  dplyr::full_join(month_abb, by = 'month') %>% 
+  dplyr::mutate(n = ifelse(is.na(n), 0, n)) %>% 
+  dplyr::mutate(month_abb = factor(month_abb, month.abb)) %>% 
+  ggplot(aes(month_abb, n, fill = month_abb)) +
+  ggplot2::geom_col(show.legend = F) +
+  ggplot2::scale_fill_manual(values = c("#798E87","#8C8971","#A0845B","#B48046",
+  "#C28340", "#C59758", "#C8AA70", "#CBBE88",  "#AEA77C", "#817A5D", "#554D3E","#29211F"))+
+  labs(x = 'Month', y = '# of Peak Flows', title = 'Count of Peak Flows by Month') +
+  ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10.5),
+                   axis.title.x = ggplot2::element_text(size = 10.5),
+        axis.text.y = ggplot2::element_text(size = 10.5),
+        strip.text = ggplot2::element_text(size = 10.5),
+        plot.title = ggplot2::element_text(size = 12.5),
+        axis.title.y = ggplot2::element_text(size = 10.5),
+        plot.subtitle = ggplot2::element_text(size = 10.5),
+        legend.position = 'none')
+```
+
+<br>
+<br>
+<center>
+## Zonal Stats
+
+```{r, echo=FALSE, message=FALSE, error=FALSE,warning=F, fig.align='center'}
+basin_sf <- usgs_ggplot_data_not_filtered() %>%
+  dplyr::slice_head(n=1) %>% 
+  sf::st_as_sf(coords = c('long', 'lat'))
+basin <- basin_sf %>% wildlandhydRo::get_Basin()
+basin_stats <- wildlandhydRo::get_BasinStats(basin) %>% dplyr::select(-Date, -c(year:month_abb)) 
+
+meta <- nhdplusTools::discover_nldi_characteristics('total') %>% .[['total']]
+
+meta_df <- meta %>% dplyr::left_join(basin_stats %>% 
+                                       tidyr::pivot_longer(dplyr::starts_with('TOT_'), names_to = 'characteristic_id'), by = 'characteristic_id')
+
+leaf <- base_map() %>% 
+  leaflet::addCircleMarkers(data = basin_sf, color = 'red') %>% 
+  leaflet::addPolygons(data = basin_stats)
+  #                      popup = leafpop::popupTable(basin_stats %>% 
+  # dplyr::rename_with(~stringr::str_remove(., 'TOT_'), starts_with('TOT_')) %>% 
+  #                                                    dplyr::filter(stringr::str_detect('BFI|TWI'))))
+leaf
+```
+
+
+```{r, echo=FALSE, message=FALSE, error=FALSE,warning=F}
+
+DT::datatable(meta_df%>% 
+  dplyr::mutate(characteristic_id = stringr::str_remove(characteristic_id, 'TOT_')) %>% 
+    dplyr::select(characteristic_id, characteristic_description, value, units))
+```
+</center>
+## References
+
+De Cicco, L.A., Hirsch, R.M., Lorenz, D., Watkins, W.D., 2018, dataRetrieval: R packages for discovering and retrieving water data available from Federal hydrologic web services, <doi:10.5066/P9X4L3GE>  
+
+R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.  
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>

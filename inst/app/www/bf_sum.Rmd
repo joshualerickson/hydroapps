@@ -1,0 +1,35 @@
+---
+title: ''
+output: 
+  html_document:
+    self_contained: false
+always_allow_html: true
+---
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12pt;
+    line-height: 1.42857143;
+    color: #333;
+    background-color: #fff;
+    overflow: auto;
+}
+</style>
+
+The graph above provides the baseflow index (BFI) over time. To make calculations simple, years with days less than 355 will not be included in the calculations. Thus, leaving 'clean' data for calculations. Years that were not used are: **`r usgs_ggplot_data_not_filtered() %>% dplyr::count(year) %>% dplyr::filter(n < 355) %>% tidyr::pivot_wider(names_from = n, values_from = year, names_glue = "count_{n}") %>% dplyr::mutate(years_missing = paste(unlist(.), collapse = ', ')) %>% dplyr::pull(years_missing)`**. What this means is these years won't be used for hypothesis testing, e.g. Mann-Kendall.  
+
+Baseflow Index (BFI) is an index that uses the total flow (or quick flow) of a stream and the theoretical baseflow (depending on methodology). The methods used above are from the {lfstat} package (Koffler, D., and G. Laaha. 2012) and use a separation window of 5 and . 
+
+The ratio of long-term mean baseflow to total streamflow can be expressed simply by the equation below.
+
+$$
+BFI = \frac{Total \ Flow}{Baseflow}
+$$
+
+## References  
+
+Koffler, D., and G. Laaha. "LFSTAT-an R-package for low-flow analysis." EGU General Assembly Conference Abstracts. 2012.
+
+Singh, Shailesh Kumar, et al. "Towards baseflow index characterisation at national scale in New Zealand." Journal of Hydrology 568 (2019): 646-657.

@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
+
+table.my-popup{ 
+  background:#000000;
+}
+
+table.my-popup tr:nth-child(even){ 
+  background:#ffffff;
+}
+
+table.my-popup tr:nth-child(odd){ 
+  background:#F4F6F6;
+}
+
+.modal-content {
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #999;
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: 6px;
+    -webkit-box-shadow: 0 3px 9px rgb(0 0 0 / 50%);
+    box-shadow: 0 3px 9px rgb(0 0 0 / 50%);
+    outline: 0;
+    width: 1600px;
+}
+.modal-dialog {
+    width: max-content;
+    margin: 10px;
+    margin-left: 100px;
+    margin-right: 100px;
+}
+
+.leaflet-touch .leaflet-draw-draw-marker {
+  width: 50px;
+  outline: 2px solid black;
+  background-color: #50acec;
+}
+
+.btn-default:hover {
+    color: #333;
+    background-color: #f4f4f4;
+    border-color: black;
+}
+
+
+.tabbable > .nav > li > a {
+    background-color: #fff;
+    outline: 2px solid black;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    font-style: italic;
+    color: black;
+    border-bottom-color: #333;
+    border: black;
+    font-weight: bold;
+    border-width: thick;
+    margin-top: 10px;
+    margin-bottom: 2px;
+}
+
+
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+    -ms-touch-action: none;
+    touch-action: none;
+    border-color: black;
+}
+
+.btn-default {
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    outline: 2px solid black;
+    background-position: -120px -1px;
+    background-color: #fff;
+    border-color: black;
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+}
+
+
+.btn-modal {
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    /* outline: 2px solid black; */
+    /* background-position: 120px 1px; */
+    /* background-color: #fff; */
+    /* border-color: black; */
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    width: 70px;
+    position: right;
+    /* margin-right: 25px; */
+    margin-right: -10px;
+    margin-left: 734px;
+    margin-top: 50px;
+    
+}
+
+.btn-submit {
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    /* outline: 2px solid black; */
+    /* background-position: 120px 1px; */
+    /* background-color: #fff; */
+    /* border-color: black; */
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    width: 170px;
+    position: right;
+    
+}
+
+
+label {
+    display: inline-block;
+    max-width: 100%;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+}
+.btn-default:hover {
+    color: #333;
+    background-color: #fff;
+    border-color: black;
+    
+}
+
+.leaflet-touch .leaflet-control-layers-toggle {
+    width: 44px;
+    height: 44px;
+    background-color: #fff;
+    border-color: black;
+    outline: 2px solid black;
+}
+
+.leaflet-bar a {
+    background-color: #fff;
+    border-bottom: 1px solid #ccc;
+    border-color: black;
+    outline: 2px solid black;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: black;
+}
+
+.body-methods {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 22px;
+    line-height: 1.42857143;
+    color: #333;
+    background-color: #fff;
+    overflow: auto;
+}
+
+
+.modal-body {
+    height: 800px;
+    overflow: auto;
+}
+/* Whole document: */
+body{
+  font-family: 'Montserrat', sans-serif;
+    font-size: 12pt;
+    font-weight: bold;
+}
+
+/* Headers 
+h1,h2,h3,h4,h5,h6{
+  font-family: 'Montserrat', sans-serif;
+}
+*/
+
+.body-usgs-stats {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14pt;
+    line-height: 1.42857143;
+    color: #333;
+    background-color: #fff;
+    overflow: auto;
+}
+
+/*
+.th-box{
+    border:2px solid #000000;
+}
+
+.td-box{
+    border:2px solid #000000;
+}
+*/
+
+.picker-cust {
+    display: block;
+    padding: 3px 20px;
+    clear: both;
+    font-weight: 400;
+    line-height: 1.42857143;
+    color: #333;
+    white-space: nowrap;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14pt;
+    line-height: 10px;
+}
+
+
+.b--gray { 
+  border-color: #888888;
+}
+.b--red { 
+  border-color: red;
+}
+.b--green { 
+  border-color: green;
+}
+.ba {
+  border-style: solid;
+}
+.bw2 {
+  border-width: .25em;
+}
+.ma2 {
+  margin: 1.5em;
+}
+.pa4 {
+  padding: 0.5em;
+}
+.shadow-1 {
+  box-shadow: 4px 4px 8px 0 rgba(0,0,0,.2);
+}
