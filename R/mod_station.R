@@ -215,7 +215,8 @@ mod_station_server <- function(input, output, session, values){
   
   output$bf_sum <- renderUI({
     
-    bf_path <- paste0(system.file('app/www', 'bf_sum.html', package = 'hydroapps'))
+    bf_path <- base64enc::dataURI(file = system.file('app/www', 'bf_sum.html', package = 'hydroapps'),
+                                  mime = 'text/html')
     bf_html <- tags$iframe(src=bf_path, height=600, width = 1248, frameBorder='0')
     bf_html
     
@@ -223,7 +224,7 @@ mod_station_server <- function(input, output, session, values){
   
   output$peak_rep <- renderUI({
     
-    freq_path <- paste0(system.file('app/www', 'peak_rep.html', package = 'hydroapps'))
+    freq_path <- normalizePath(system.file('app/www', 'peak_rep.html', package = 'hydroapps'))
     freq_html <- tags$iframe(src=freq_path, height=200, width = 1248, frameBorder='0')
     freq_html
     
