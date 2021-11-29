@@ -241,7 +241,7 @@ mod_snotel_server <- function(input, output, session, values){
   output$frame <- renderUI({
     
     html_path <- paste0(system.file('app/www', 'snotel_stats.html', package = 'hydroapps'))
-    stats_html <-  tags$iframe(src=html_path, height=600, width=1248,frameBorder="0")
+    stats_html <-  tags$iframe(src=normalizePath(html_path), height=600, width=1248,frameBorder="0")
     stats_html
   })
   
