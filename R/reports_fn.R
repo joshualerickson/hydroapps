@@ -46,9 +46,9 @@ get_snotel_report <- function(site){
   }
   
   
-  rmarkdown::render('inst/app/www/snotel_stats_static.Rmd',
+  rmarkdown::render(system.file('app/www', 'snotel_stats_static.Rmd', package = 'hydroapps'),
                     output_format = rmarkdown::html_document())
-  browseURL('inst/app/www/snotel_stats_static.html')
+  browseURL(system.file('app/www', 'snotel_stats_static.html', package = 'hydroapps'))
 }
 
 
@@ -78,8 +78,8 @@ get_usgs_report <- function(site){
     nwis_sites_df <- nwis_sites_df %>% dplyr::mutate(Station = 'Tobacco River near Eureka MT')
   } 
   
-  rmarkdown::render('inst/app/www/usgs_stats_static.Rmd',
+  rmarkdown::render(system.file('app/www', 'usgs_stats_static.Rmd', package = 'hydroapps'),
                     output_format = rmarkdown::html_document())
   
-  browseURL('inst/app/www/usgs_stats_static.html')
+  browseURL(system.file('app/www', 'usgs_stats_static.html', package = 'hydroapps'))
 }

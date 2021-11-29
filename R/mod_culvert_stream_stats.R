@@ -723,11 +723,11 @@ tags$div(class = 'btn-modal',actionButton('dis2', 'Done', class = 'btn-modal'))
       content = function(file) {
         if(input$format == 'HTML'){
           
-          src <- normalizePath('inst/app/www/report.Rmd')
+          src <- normalizePath(system.file('app/www', 'report.Rmd', package = 'hydroapps'))
           
         } else {
           
-          src <- normalizePath('inst/app/www/report_word.Rmd')
+          src <- normalizePath(system.file('app/www', 'report_word.Rmd', package = 'hydroapps'))
           
         }
         

@@ -216,7 +216,7 @@ mod_snotel_server <- function(input, output, session, values){
       
       incProgress(amount = 3/4, 'rendering stats')
       
-      rmarkdown::render('inst/app/www/snotel_stats.Rmd',
+      rmarkdown::render(system.file('app/www', 'snotel_stats.Rmd', package = 'hydroapps'),
                         output_format = rmarkdown::html_document())
       # rmarkdown::render('inst/app/www/bf_sum.Rmd',
       #                   output_format = rmarkdown::html_document())
@@ -240,7 +240,7 @@ mod_snotel_server <- function(input, output, session, values){
   # These render the .html files for the modal
   output$frame <- renderUI({
     
-    html_path <- paste('www/snotel_stats.html')
+    html_path <- system.file('app/www', 'snotel_stats.html', package = 'hydroapps')
     stats_html <-  tags$iframe(src=html_path, height=600, width=1248,frameBorder="0")
     stats_html
   })

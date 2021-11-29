@@ -184,11 +184,11 @@ mod_station_server <- function(input, output, session, values){
     
     incProgress(amount = 3/4, 'rendering stats')
     
-    rmarkdown::render('inst/app/www/usgs_stats.Rmd',
+    rmarkdown::render(system.file('app/www', 'usgs_stats.Rmd', package = 'hydroapps'),
                              output_format = rmarkdown::html_document())
-    rmarkdown::render('inst/app/www/bf_sum.Rmd',
+    rmarkdown::render(system.file('app/www', 'bf_sum.Rmd', package = 'hydroapps'),
                       output_format = rmarkdown::html_document())
-    rmarkdown::render('inst/app/www/peak_rep.Rmd',
+    rmarkdown::render(system.file('app/www', 'peak_rep.Rmd', package = 'hydroapps'),
                       output_format = rmarkdown::html_document())
     
     values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
@@ -208,14 +208,14 @@ mod_station_server <- function(input, output, session, values){
   # These render the .html files for the modal
   output$frame <- renderUI({
     
-    html_path <- paste('www/usgs_stats.html')
+    html_path <- system.file('app/www', 'usgs_stats.html', package = 'hydroapps')
     stats_html <-  tags$iframe(src=html_path, height=600, width=1248,frameBorder="0")
     stats_html
   })
   
   output$bf_sum <- renderUI({
     
-    bf_path <- paste('www/bf_sum.html')
+    bf_path <- system.file('app/www', 'bf_sum.html', package = 'hydroapps')
     bf_html <- tags$iframe(src=bf_path, height=600, width = 1248, frameBorder='0')
     bf_html
     
@@ -223,7 +223,7 @@ mod_station_server <- function(input, output, session, values){
   
   output$peak_rep <- renderUI({
     
-    freq_path <- paste('www/peak_rep.html')
+    freq_path <- system.file('app/www', 'peak_rep.html', package = 'hydroapps')
     freq_html <- tags$iframe(src=freq_path, height=200, width = 1248, frameBorder='0')
     freq_html
     
