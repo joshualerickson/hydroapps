@@ -24,6 +24,8 @@ mod_station_ui <- function(id){
 mod_station_server <- function(input, output, session, values){
   ns <- session$ns
   
+  #add a path we'll keep referencing
+  addResourcePath('www', system.file('app', package = 'hydroapps'))
   #starting leaflet map
   output$leaf_map <- leaflet::renderLeaflet({
     
@@ -185,7 +187,7 @@ mod_station_server <- function(input, output, session, values){
     
     incProgress(amount = 3/4, 'rendering stats')
     
-    rmarkdown::render(system.file('app/www', 'usgs_stats.Rmd', package = 'hydroapps'))
+    rmarkdown::render('www/usgs_stats.Rmd')
     
     values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
         filter(
@@ -199,16 +201,14 @@ mod_station_server <- function(input, output, session, values){
     values$all_months <- TRUE
   })
     
-     # values$html_path <- system.file('app/www', 'usgs_stats.html', package = 'hydroapps')
 
   })
 
  
     # These render the .html files for the modal
-  addResourcePath('www', system.file('app',package = 'hydroapps'))
   output$frame <- renderUI({
-    stats_html <-  tags$iframe(seamless = 'usgs_stats.html', 
-                               src='usgs_stats.html',
+    stats_html <-  tags$iframe(seamless = 'seamless', 
+                               src='www/usgs_stats.html',
                                height=600, width=1248,
                                frameBorder="0")
     stats_html
