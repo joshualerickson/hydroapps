@@ -1,7 +1,7 @@
 ---
 title: ''
 output: 
-  html_document:
+  html_fragment:
     self_contained: false
 always_allow_html: true
 ---

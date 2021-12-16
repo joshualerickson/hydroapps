@@ -76,7 +76,8 @@ dv_report <- nwis_sites_df %>%
            max_va = max_flow$Flow,
            max_va_yr = lubridate::year(max_flow$Date),
            min_va_yr = lubridate::year(min_flow$Date)) %>% 
-    ungroup()
+    ungroup() %>% 
+  mutate(month_day = factor(month_day))
   
   hr_flow <- nwis_sites_df %>% wildlandhydRo::hourlyUSGS(days = 30) 
   
@@ -427,28 +428,32 @@ plotly::ggplotly(g)
 </center>
 <br>
 
-```{r, echo=FALSE,warning=F, error=F, message=F, results='hide', fig.align='center', fig.height=6, fig.width=10}
+```{r, echo=FALSE, warning=FALSE,error=F, message = F, fig.align='center', fig.width=11, fig.height=6}
 if(dv_report[1,]$Station %in% 'Tobacco River near Eureka MT'){
+  
+  dv_report2 <- dv_report %>% mutate(current_daily_mean_flow = Flow) %>% 
+    filter(Date <= max(Date), Date >= max(Date)-365)
+g1 <- plot_reportUSGS_custom(dv_report2) +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
+                 axis.text.y = ggplot2::element_text(size = 10)) + 
+  ggplot2::scale_y_continuous()
 
-  wildlandhydRo::plot_USGSdrought(nwis_sites_df,
-                                rolln = 1, 
-                                startDate = max(nwis_sites_df$Date)- 365,
-                                endDate = max(nwis_sites_df$Date)) +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
-        axis.text.y = ggplot2::element_text(size = 10))
- 
 } else {
   
-  wildlandhydRo::plot_reportUSGS(dv_report) +
+  g1 <- wildlandhydRo::plot_reportUSGS(dv_report) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
-        axis.text.y = ggplot2::element_text(size = 10))
+        axis.text.y = ggplot2::element_text(size = 10)) + 
+    ggplot2::scale_y_continuous()
+  plotly::ggplotly(g1)
 }
+
+
 
 ```
 
 <br>
 
-```{r,fig.align='center', echo=F,error=F, message=F, results='hide'}
+```{r,fig.align='center', echo=F,error=F, message=F}
 month_abb <- data.frame(month = seq(1,12,1), month_abb = month.abb)
 nwis_sites_df %>% wildlandhydRo::wyUSGS() %>% 
   mutate(month = lubridate::month(peak_dt)) %>% 

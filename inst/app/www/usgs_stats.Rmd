@@ -2,7 +2,7 @@
 title: "Discharge Report for USGS Gauging Station: <br> <span style='color: black; font-size: 30px'> `r paste0(usgs_ggplot_data_not_filtered() %>% dplyr::slice(n=1) %>% .$Station)`</span>"
 date: "`r Sys.Date()`"
 output: 
-  html_document:
+  html_fragment:
     self_contained: false
 always_allow_html: true
 ---
@@ -52,22 +52,23 @@ if(one_row$Station %in% 'Tobacco River near Eureka MT'){
   ungroup() %>% 
   group_by(month_abb) %>% slice(n=1) %>% ungroup()%>% 
   mutate(across(p05_va:p95_va, round, 0))
-  max_flow <- nwis_sites_df %>% 
+  
+  max_flow <- usgs_ggplot_data_not_filtered() %>% 
   filter(month == month_station, day == day_station) %>% 
   slice_max(Flow)
 
-  min_flow <- nwis_sites_df %>% 
+  min_flow <- usgs_ggplot_data_not_filtered() %>% 
   filter(month == month_station, day == day_station) %>% 
   slice_min(Flow)
   
-dv_report <- nwis_sites_df %>% 
+dv_report <- usgs_ggplot_data_not_filtered() %>% 
   group_by(Station, month_day) %>% 
   summarise(quantiles = quantile(Flow, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
                                                                   0.75,0.80, 0.90, 0.95), na.rm = TRUE),
             breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
                         "p80_va", "p90_va", "p95_va")) %>% 
   pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
-  right_join(nwis_sites_df, by = c("Station", "month_day")) %>% 
+  right_join(usgs_ggplot_data_not_filtered(), by = c("Station", "month_day")) %>% 
   mutate(across(contains("_va"), round, 0)) %>% 
   ungroup() %>% 
   group_by(Station, month_day) %>% 
@@ -77,7 +78,7 @@ dv_report <- nwis_sites_df %>%
            min_va_yr = lubridate::year(min_flow$Date)) %>% 
     ungroup()
   
-  hr_flow <- nwis_sites_df %>% wildlandhydRo::hourlyUSGS(days = 30) 
+  hr_flow <- usgs_ggplot_data_not_filtered() %>% wildlandhydRo::hourlyUSGS(days = 30) 
   
   u_hour <- hr_flow %>% mutate(Date = lubridate::as_date(date), 
         year = lubridate::year(Date), month = lubridate::month(Date), day = lubridate::day(Date), 
@@ -400,7 +401,7 @@ mv_stats_gt %>%
 :::
 <br>
 <center>
-```{r echo=F, message = F, warning=F,fig.align='center',  error=F}
+```{r echo=F, message = F, warning=F,error=F}
 if(!is.null(hr_flow)){
 g<-ggplot(data = joined_flows, aes(Date, value, color = name)) + 
   ggplot2::geom_line(size = 1, show.legend = F) + 
@@ -411,6 +412,7 @@ g<-ggplot(data = joined_flows, aes(Date, value, color = name)) +
   ggplot2::labs(title = 'Last 30 days of flow',
                 x = 'Date', y = 'Discharge (cfs)')
 plotly::ggplotly(g)
+
 } else {
   ggplot() + 
   ggplot2::geom_line() + 
@@ -423,32 +425,38 @@ plotly::ggplotly(g)
 
 ```
 </center>
+
 <br>
 
-```{r, echo=FALSE,warning=F, error=F, message=F, results='hide', fig.align='center', fig.height=6, fig.width=10}
+<center>
+```{r, echo=FALSE,warning=F, error=F, message=F, fig.width=11}
 if(dv_report[1,]$Station %in% 'Tobacco River near Eureka MT'){
 
-  wildlandhydRo::plot_USGSdrought(usgs_ggplot_data_not_filtered(),
+  quart <- wildlandhydRo::plot_USGSdrought(usgs_ggplot_data_not_filtered(),
                                 rolln = 1, 
                                 startDate = max(usgs_ggplot_data_not_filtered()$Date)- 365,
                                 endDate = max(usgs_ggplot_data_not_filtered()$Date)) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
         axis.text.y = ggplot2::element_text(size = 10))
+   plotly::ggplotly(quart)
  
 } else {
   
-  wildlandhydRo::plot_reportUSGS(dv_report) +
+ quart <- wildlandhydRo::plot_reportUSGS(dv_report) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
         axis.text.y = ggplot2::element_text(size = 10))
+ plotly::ggplotly(quart)
 }
 
+
+
 ```
-
+</center>
 <br>
-
-```{r,fig.align='center', echo=F}
+<center>
+```{r, echo=F}
 month_abb <- data.frame(month = seq(1,12,1), month_abb = month.abb)
-usgs_ggplot_data_not_filtered() %>% wildlandhydRo::wyUSGS() %>% 
+peak_count <- usgs_ggplot_data_not_filtered() %>% wildlandhydRo::wyUSGS() %>% 
   mutate(month = lubridate::month(peak_dt)) %>% 
   dplyr::count(month) %>% filter(!is.na(month)) %>% 
   dplyr::full_join(month_abb, by = 'month') %>% 
@@ -468,8 +476,10 @@ usgs_ggplot_data_not_filtered() %>% wildlandhydRo::wyUSGS() %>%
         axis.title.y = ggplot2::element_text(size = 10.5),
         plot.subtitle = ggplot2::element_text(size = 10.5),
         legend.position = 'none')
-```
 
+plotly::ggplotly(peak_count)
+```
+</center>
 <br>
 <br>
 <center>

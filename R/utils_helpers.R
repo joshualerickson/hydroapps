@@ -83,3 +83,116 @@ attribute_filter_forest = function(ss_list){
   } else{}
   
 }
+
+
+plot_reportUSGS_custom <- function(report, time = "daily", smooth.span = NULL) {
+  
+  if(missing(report))stop("Need a report dataframe.")
+  
+  
+  if(time == "daily") {
+    
+    sty.rep <- function(data, breaks, title) {
+      
+      data +
+        theme_bw() +
+        labs(title= title,
+             y = paste("Discharge")) +
+        scale_fill_manual(name="Percentiles",breaks = breaks, labels = c("25<sup>th</sup> - 75<sup>th</sup>",
+                                                                         "10<sup>th</sup> - 25<sup>th</sup>",
+                                                                         "5<sup>th</sup> - 10<sup>th</sup>",
+                                                                         "0 - 5<sup>th</sup>"),
+                          values = rev(c("#FF0000","#FFA500","#FFFF00","#006400")))+
+        guides(fill = guide_legend(override.aes = list(alpha = .15))) +
+        scale_color_manual(name = "", values = "black") +
+        theme(legend.position="bottom",
+              legend.text = ggtext::element_markdown(),
+              axis.ticks.x=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank())
+    }
+    
+    percentiles <- report %>%
+      dplyr::rename_with(.cols = contains('_va'),.fn = ~stringr::str_replace_all(., "_va", "")) %>%
+      mutate(month_day = forcats::fct_reorder(month_day, Date, .desc = T),
+             day.of.year = as.numeric(strftime(Date,
+                                               format = "%j")))
+    if(!is.null(smooth.span)){
+      percentiles <- percentiles %>%
+        group_by(Station) %>%
+        nest() %>%
+        mutate(smooth = purrr::map(data, ~smooth_func(.,smooth.span))) %>%
+        unnest('smooth') %>% ungroup()
+    }
+    title.text <- paste0(unique(percentiles$Station), "\n",
+                         "Date of plot = ",min(percentiles$Date),' to ', max(percentiles$Date))
+    
+    label.text <- c("Normal","Drought Watch","Drought Warning",'Drought Emergency')
+    
+    simple.plot <- ggplot(data = percentiles, aes(x = Date)) +
+      geom_ribbon(aes(ymin = p25, ymax = p75, fill = "Normal"), alpha = 0.5) +
+      geom_ribbon(aes(ymin = p10, ymax = p25, fill = "Drought Watch"), alpha = 0.5) +
+      geom_ribbon(aes(ymin = p05, ymax = p10, fill = "Drought Warning"), alpha = 0.5) +
+      geom_ribbon(aes(ymin = min, ymax = p05, fill = 'Drought Emergency')) +
+      scale_y_log10(labels = scales::comma) +
+      geom_line( aes(x=Date, y=current_daily_mean_flow, color = 'Daily Flow'),size = 0.75)
+    
+    styled.plot <- simple.plot +
+      theme_bw() +
+      labs(title= title.text,
+           y = paste("Discharge")) +
+      scale_fill_manual(name="Percentiles",breaks = label.text, labels = c("25<sup>th</sup> - 75<sup>th</sup>",
+                                                                       "10<sup>th</sup> - 25<sup>th</sup>",
+                                                                       "5<sup>th</sup> - 10<sup>th</sup>",
+                                                                       "0 - 5<sup>th</sup>"),
+                        values = rev(c("#FF0000","#FFA500","#FFFF00","#006400")))+
+      guides(fill = guide_legend(override.aes = list(alpha = .15))) +
+      scale_color_manual(name = "", values = "black") +
+      theme(legend.position="bottom",
+            legend.text = ggtext::element_markdown(),
+            axis.ticks.x=element_blank(),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank())
+    
+    
+    
+    if(length(unique(percentiles$Station))>1){
+      styled.plot +
+        facet_wrap(~Station, scales = "free") +
+        labs(title = '')
+    } else {
+      
+      styled.plot
+    }
+    
+  } else if (time == "month") {
+    
+    
+    per <- c("p05_va","p10_va","p20_va","p25_va","p50_va","p75_va","p80_va","p90_va","p95_va")
+    percentiles <- report %>%
+      pivot_longer(cols = all_of(per), names_to = "Percentile") %>%
+      mutate(Percentile = str_replace_all(Percentile, "_va|p", ""))
+    
+    if(length(unique(percentiles$Station))>1){
+      ggplot(percentiles, aes(Percentile, value))+
+        geom_col(fill = "white", aes(color = Station)) +
+        geom_hline(aes(yintercept = current_mean_monthly_flow, color = Station), linetype = 3, size = 1) +
+        theme_bw() +
+        labs(color = "Current Year Reading", title = "Monthly Stats: POR Percentiles and Current Year Stat.",
+             y = "Monthly Flow Stats") +
+        facet_wrap(~month, scales = "free")
+    } else {
+      
+      ggplot(percentiles, aes(Percentile, value))+
+        geom_col(fill = "white", color = "black") +
+        geom_hline(aes(yintercept = current_mean_monthly_flow, color = Station), linetype = 3, size = 1) +
+        theme_bw() +
+        labs(color = "Current Year Reading", title = "Monthly Stats: POR Percentiles and Current Year Stat.",
+             y = "Monthly Flow Stats") +
+        facet_wrap(~month, scales = "free")
+    }
+    
+    
+  }
+  
+}

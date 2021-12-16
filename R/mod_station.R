@@ -142,7 +142,8 @@ mod_station_server <- function(input, output, session, values){
         
         nwis_sites_df <- nwis_sites_df[!duplicated(nwis_sites_df$Date),]
         
-        nwis_sites_df <- nwis_sites_df %>% dplyr::mutate(Station = 'Tobacco River near Eureka MT')
+        nwis_sites_df <- nwis_sites_df %>% dplyr::mutate(Station = 'Tobacco River near Eureka MT',
+                                                         site_no = '12301250')
       } 
       
       nwis_sites_df
@@ -186,10 +187,10 @@ mod_station_server <- function(input, output, session, values){
     
     rmarkdown::render(system.file('app/www', 'usgs_stats.Rmd', package = 'hydroapps'),
                              output_format = rmarkdown::html_document())
-    rmarkdown::render(system.file('app/www', 'bf_sum.Rmd', package = 'hydroapps'),
-                      output_format = rmarkdown::html_document())
-    rmarkdown::render(system.file('app/www', 'peak_rep.Rmd', package = 'hydroapps'),
-                      output_format = rmarkdown::html_document())
+    # rmarkdown::render(system.file('app/www', 'bf_sum.Rmd', package = 'hydroapps'),
+    #                   output_format = rmarkdown::html_document())
+    # rmarkdown::render(system.file('app/www', 'peak_rep.Rmd', package = 'hydroapps'),
+    #                   output_format = rmarkdown::html_document())
     
     values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
         filter(
@@ -201,36 +202,20 @@ mod_station_server <- function(input, output, session, values){
         )
     
     values$all_months <- TRUE
-  
   })
   })
   
+  values$html_path <- system.file('app/www', 'usgs_stats.html', package = 'hydroapps')
   # These render the .html files for the modal
+  
   output$frame <- renderUI({
-    
-    html_path <- base64enc::dataURI(file = system.file('app/www', 'usgs_stats.html', package = 'hydroapps'),
-                                    mime = 'text/html')
-    stats_html <-  tags$iframe(src=html_path, height=600, width=1248,frameBorder="0")
+    stats_html <-  tags$iframe(src = values$html_path,
+                               height=600,
+                               width=1248,
+                               frameBorder="0")
     stats_html
   })
   
-  output$bf_sum <- renderUI({
-    
-    bf_path <- base64enc::dataURI(file = system.file('app/www', 'bf_sum.html', package = 'hydroapps'),
-                                  mime = 'text/html')
-    bf_html <- tags$iframe(src=bf_path, height=600, width = 1248, frameBorder='0')
-    bf_html
-    
-  })
-  
-  output$peak_rep <- renderUI({
-    
-    freq_path <- base64enc::dataURI(file = system.file('app/www', 'peak_rep.html', package = 'hydroapps'),
-                                    mime = 'text/html')
-    freq_html <- tags$iframe(src=freq_path, height=200, width = 1248, frameBorder='0')
-    freq_html
-    
-  })
   
   #Modal that pops up
   
@@ -240,6 +225,21 @@ mod_station_server <- function(input, output, session, values){
       title = "Explore the Station",
       easyClose = TRUE,
       footer = NULL,
+      tags$style(
+        type = 'text/css',
+        '.modal-dialog {
+    width: max-content;
+    margin: 100px;
+    margin-left: 100px;
+    margin-right: 100px;}'
+      ),
+        tags$style(
+          type = 'text/css',
+          '.modal-body {
+        position: relative;
+        padding: 10px;
+        min-height: 700px;
+      }'),
       shinydashboard::box(width = 2,
                           conditionalPanel(condition = "input.select_or_slider == 'Slider'",
                           shiny::sliderInput(ns('month_slider'), label = 'Choose a month', 
@@ -277,8 +277,7 @@ mod_station_server <- function(input, output, session, values){
                           
       shinydashboard::box(width=10,fluidPage(tabsetPanel(id = 'exploring_hydrograph',              
                                          tabPanel(title = "Summary Stats",
-                                                    htmlOutput(ns("frame")) %>%
-                                                    shinycssloaders::withSpinner()),                       
+                                                  htmlOutput(ns('frame')) %>% shinycssloaders::withSpinner()),                       
                                          tabPanel(title = "Hydrograph",
                                                   plotly::plotlyOutput(ns('hydrograph'),  height = 600) %>%
                                                     shinycssloaders::withSpinner(),
@@ -291,8 +290,7 @@ mod_station_server <- function(input, output, session, values){
                                                               choices = c("Maximum", "Minimum", "Mean", "Median"))),
                                          tabPanel(title = 'BFI',
                                                   plotly::plotlyOutput(ns('bf_plot'), height = 600) %>%
-                                                    shinycssloaders::withSpinner(),
-                                                  htmlOutput(ns('bf_sum'))),
+                                                    shinycssloaders::withSpinner()),
                                          tabPanel(title = 'Flow Duration Curve',
                                                   plotly::plotlyOutput(ns('fdc'), height = 600) %>%
                                                     shinycssloaders::withSpinner()),
@@ -300,8 +298,7 @@ mod_station_server <- function(input, output, session, values){
                                                   plotly::plotlyOutput(ns('freq'), height = 600) %>%
                                                     shinycssloaders::withSpinner(),
                                                   radioButtons(ns('ff_sel'), 'Choose graph type', choices = c('Time Series', 'Return Interval'), selected = 'Time Series',
-                                                               inline = TRUE),
-                                                  htmlOutput(ns('peak_rep'))),
+                                                               inline = TRUE)),
                                          tabPanel(title = 'Forecast',
                                                   uiOutput(ns('forecast')))),
       )),

@@ -23,12 +23,14 @@ table.my-popup tr:nth-child(odd){
     outline: 0;
     width: 1600px;
 }
-.modal-dialog {
+.custom-modal-dialog {
     width: max-content;
-    margin: 10px;
+    margin: 100px;
     margin-left: 100px;
     margin-right: 100px;
+    right: calc(20%);
 }
+
 
 .leaflet-touch .leaflet-draw-draw-marker {
   width: 50px;
