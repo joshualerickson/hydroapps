@@ -209,11 +209,8 @@ mod_station_server <- function(input, output, session, values){
   # These render the .html files for the modal
   
   output$frame <- renderUI({
-    stats_html <-  tags$iframe(src = values$html_path,
-                               height=600,
-                               width=1248,
-                               frameBorder="0")
-    stats_html
+    stats_html <-  values$html_path
+    includeHTML(stats_html)
   })
   
   
