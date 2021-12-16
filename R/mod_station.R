@@ -208,7 +208,7 @@ mod_station_server <- function(input, output, session, values){
   addResourcePath('www', system.file('app',package = 'hydroapps'))
   output$frame <- renderUI({
     stats_html <-  tags$iframe(seamless = 'usgs_stats.html', 
-                               src=values$html_path,
+                               src='usgs_stats.html',
                                height=600, width=1248,
                                frameBorder="0")
     stats_html
