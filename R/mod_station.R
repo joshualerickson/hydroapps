@@ -187,7 +187,7 @@ mod_station_server <- function(input, output, session, values){
     
     incProgress(amount = 3/4, 'rendering stats')
     
-    rmarkdown::render('usgs_stats.Rmd')
+    rmarkdown::render(app_sys('app/www/usgs_stats.Rmd'))
     
     values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
         filter(
@@ -208,7 +208,7 @@ mod_station_server <- function(input, output, session, values){
     # These render the .html files for the modal
   output$frame <- renderUI({
     stats_html <-  tags$iframe(seamless = 'seamless', 
-                               src='usgs_stats.html',
+                               src="www/usgs_stats.html",
                                height=600, width=1248,
                                frameBorder="0")
     stats_html
@@ -558,13 +558,13 @@ app_ui_station <- function(request) {
 golem_add_external_resources <- function(){
   
   add_resource_path(
-    'www', system.file('app', package = 'hydroapps')
+    'www', app_sys('app/www')
   )
   
   tags$head(
     favicon(),
     bundle_resources(
-      path = system.file('app/www', package = 'hydroapps'),
+      path = app_sys('app/www'),
       app_title = 'hydroapps'
     ),
     shinyjs::useShinyjs()
