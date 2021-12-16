@@ -164,7 +164,7 @@ mod_station_server <- function(input, output, session, values){
   observeEvent(input$leaf_map_marker_click$id,{
     
    withProgress(message = 'downloading station daily values...', value = 1/2, { 
-     
+     rm(system.file('app/www', 'usgs_stats.html', package = 'hydroapps'))
      usgs_ggplot_data_not_filtered()
      
     values$maxwy_station <- max(usgs_ggplot_data_not_filtered()$wy, na.rm = T)
@@ -185,12 +185,7 @@ mod_station_server <- function(input, output, session, values){
     
     incProgress(amount = 3/4, 'rendering stats')
     
-    rmarkdown::render(system.file('app/www', 'usgs_stats.Rmd', package = 'hydroapps'),
-                             output_format = rmarkdown::html_document())
-    # rmarkdown::render(system.file('app/www', 'bf_sum.Rmd', package = 'hydroapps'),
-    #                   output_format = rmarkdown::html_document())
-    # rmarkdown::render(system.file('app/www', 'peak_rep.Rmd', package = 'hydroapps'),
-    #                   output_format = rmarkdown::html_document())
+    rmarkdown::render(system.file('app/www', 'usgs_stats.Rmd', package = 'hydroapps'))
     
     values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
         filter(
@@ -203,16 +198,23 @@ mod_station_server <- function(input, output, session, values){
     
     values$all_months <- TRUE
   })
+    
+     # values$html_path <- system.file('app/www', 'usgs_stats.html', package = 'hydroapps')
+
   })
-  
-  values$html_path <- system.file('app/www', 'usgs_stats.html', package = 'hydroapps')
-  # These render the .html files for the modal
-  
+
+ 
+    # These render the .html files for the modal
+  addResourcePath('www', system.file('app',package = 'hydroapps'))
   output$frame <- renderUI({
-    stats_html <-  values$html_path
-    includeHTML(stats_html)
+    stats_html <-  tags$iframe(seamless = 'usgs_stats.html', 
+                               src=values$html_path,
+                               height=600, width=1248,
+                               frameBorder="0")
+    stats_html
+# 
+#     includeHTML(values$html_path)
   })
-  
   
   #Modal that pops up
   
@@ -274,7 +276,9 @@ mod_station_server <- function(input, output, session, values){
                           
       shinydashboard::box(width=10,fluidPage(tabsetPanel(id = 'exploring_hydrograph',              
                                          tabPanel(title = "Summary Stats",
-                                                  htmlOutput(ns('frame')) %>% shinycssloaders::withSpinner()),                       
+                                                  htmlOutput(ns('frame')) %>%
+                                                    shinycssloaders::withSpinner()
+                                                  ),                       
                                          tabPanel(title = "Hydrograph",
                                                   plotly::plotlyOutput(ns('hydrograph'),  height = 600) %>%
                                                     shinycssloaders::withSpinner(),

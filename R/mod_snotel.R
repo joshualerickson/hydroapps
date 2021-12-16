@@ -218,10 +218,6 @@ mod_snotel_server <- function(input, output, session, values){
       
       rmarkdown::render(system.file('app/www', 'snotel_stats.Rmd', package = 'hydroapps'),
                         output_format = rmarkdown::html_document())
-      # rmarkdown::render('inst/app/www/bf_sum.Rmd',
-      #                   output_format = rmarkdown::html_document())
-      # rmarkdown::render('inst/app/www/peak_rep.Rmd',
-      #                   output_format = rmarkdown::html_document())
       
       values$snotel_sites_df <- snotel_ggplot_data_not_filtered() %>%
         filter(

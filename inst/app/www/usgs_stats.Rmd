@@ -2,9 +2,11 @@
 title: "Discharge Report for USGS Gauging Station: <br> <span style='color: black; font-size: 30px'> `r paste0(usgs_ggplot_data_not_filtered() %>% dplyr::slice(n=1) %>% .$Station)`</span>"
 date: "`r Sys.Date()`"
 output: 
-  html_fragment:
+  html_document:
     self_contained: false
 always_allow_html: true
+    
+
 ---
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
