@@ -164,7 +164,7 @@ mod_station_server <- function(input, output, session, values){
   observeEvent(input$leaf_map_marker_click$id,{
     
    withProgress(message = 'downloading station daily values...', value = 1/2, { 
-     rm(system.file('app/www', 'usgs_stats.html', package = 'hydroapps'))
+     
      usgs_ggplot_data_not_filtered()
      
     values$maxwy_station <- max(usgs_ggplot_data_not_filtered()$wy, na.rm = T)
