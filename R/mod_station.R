@@ -187,7 +187,7 @@ mod_station_server <- function(input, output, session, values){
     
     incProgress(amount = 3/4, 'rendering stats')
     
-    rmarkdown::render('www/usgs_stats.Rmd')
+    rmarkdown::render('usgs_stats.Rmd')
     
     values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
         filter(
@@ -565,8 +565,7 @@ golem_add_external_resources <- function(){
     favicon(),
     bundle_resources(
       path = system.file('app/www', package = 'hydroapps'),
-      app_title = 'hydroapps',
-      package = 'hydroapps'
+      app_title = 'hydroapps'
     ),
     shinyjs::useShinyjs()
     # Add here other external resources
