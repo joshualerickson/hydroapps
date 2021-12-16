@@ -216,8 +216,7 @@ mod_snotel_server <- function(input, output, session, values){
       
       incProgress(amount = 3/4, 'rendering stats')
       
-      rmarkdown::render(system.file('app/www', 'snotel_stats.Rmd', package = 'hydroapps'),
-                        output_format = rmarkdown::html_document())
+      rmarkdown::render(app_sys('app/www/snotel_stats.Rmd'))
       
       values$snotel_sites_df <- snotel_ggplot_data_not_filtered() %>%
         filter(
@@ -236,26 +235,11 @@ mod_snotel_server <- function(input, output, session, values){
   # These render the .html files for the modal
   output$frame <- renderUI({
     
-    html_path <- system.file('app/www', 'snotel_stats.html', package = 'hydroapps')
-    stats_html <-  tags$iframe(src=html_path, height=600, width=1248,frameBorder="0")
+    html_path <- 
+    stats_html <-  tags$iframe(src="www/snotel_stats.html", height=600, width=1248,frameBorder="0")
     stats_html
   })
-  
-  # output$bf_sum <- renderUI({
-  #   
-  #   bf_path <- paste('www/bf_sum.html')
-  #   bf_html <- tags$iframe(src=bf_path, height=600, width = 1248, frameBorder='0')
-  #   bf_html
-  #   
-  # })
-  # 
-  # output$peak_rep <- renderUI({
-  #   
-  #   freq_path <- paste('www/peak_rep.html')
-  #   freq_html <- tags$iframe(src=freq_path, height=200, width = 1248, frameBorder='0')
-  #   freq_html
-  #   
-  # })
+
   
   #Modal that pops up
   
@@ -265,6 +249,20 @@ mod_snotel_server <- function(input, output, session, values){
       title = "Explore the Station",
       easyClose = TRUE,
       footer = NULL,
+      tags$style(
+        type = 'text/css',
+        '.modal-dialog {
+    width: max-content;
+    margin: 100px;
+    margin-left: calc(20%);}'
+      ),
+    tags$style(
+      type = 'text/css',
+      '.modal-body {
+        position: relative;
+        padding: 10px;
+        min-height: 700px;
+      }'),
       shinydashboard::box(width = 2,
                           conditionalPanel(condition = "input.select_or_slider == 'Slider'",
                                            shiny::sliderInput(ns('month_slider'), label = 'Choose a month', 

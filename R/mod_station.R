@@ -229,8 +229,7 @@ mod_station_server <- function(input, output, session, values){
         '.modal-dialog {
     width: max-content;
     margin: 100px;
-    margin-left: 100px;
-    margin-right: 100px;}'
+    margin-left: calc(20%);}'
       ),
         tags$style(
           type = 'text/css',
