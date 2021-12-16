@@ -55,11 +55,23 @@ if(one_row$Station %in% 'Tobacco River near Eureka MT'){
 
   max_flow <- nwis_sites_df %>% 
   filter(month == month_station, day == day_station) %>% 
-  slice_max(Flow)
-
+  slice_max(Flow) %>% slice(n = 1)
+  
+  max_dates <- nwis_sites_df %>% 
+  filter(month == month_station, day == day_station) %>% 
+    slice_max(Flow) %>% 
+    pull(year)
+  
   min_flow <- nwis_sites_df %>% 
   filter(month == month_station, day == day_station) %>% 
-  slice_min(Flow)
+  slice_min(Flow) %>% slice(n = 1)
+  
+  min_dates <- nwis_sites_df %>% 
+  filter(month == month_station, day == day_station) %>% 
+    slice_min(Flow) %>% 
+    pull(year)
+  
+  
   
 dv_report <- nwis_sites_df %>% 
   group_by(Station, month_day) %>% 
@@ -74,8 +86,8 @@ dv_report <- nwis_sites_df %>%
   group_by(Station, month_day) %>% 
     mutate(min_va = min_flow$Flow,
            max_va = max_flow$Flow,
-           max_va_yr = lubridate::year(max_flow$Date),
-           min_va_yr = lubridate::year(min_flow$Date)) %>% 
+           max_va_yr = stringr::str_c(max_dates, collapse = ', '),
+           min_va_yr = stringr::str_c(min_dates, collapse = ', ')) %>% 
     ungroup() %>% 
   mutate(month_day = factor(month_day))
   
@@ -437,6 +449,7 @@ g1 <- plot_reportUSGS_custom(dv_report2) +
   ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
                  axis.text.y = ggplot2::element_text(size = 10)) + 
   ggplot2::scale_y_continuous()
+plotly::ggplotly(g1)
 
 } else {
   

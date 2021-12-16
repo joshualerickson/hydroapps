@@ -167,23 +167,15 @@ mod_snotel_server <- function(input, output, session, values){
       
       phen_data %>% 
       mutate(max_swe = max_swe*0.0393701,
-             max_swe_doy_d = as.Date(max_swe_doy, origin = '1970-01-01') %>% 
-               stringr::str_remove( "1970-") %>% str_c(year,.data, sep = "-") %>% lubridate::parse_date_time(orders = c("%y-%m-%d", "%y%m%d", "%y-%m-%d %H:%M")),
-             first_snow_acc_d = as.Date(first_snow_acc, origin = "1970-01-01") %>%
-               stringr::str_remove( "1970-") %>% str_c(year,.data, sep = "-") %>% lubridate::parse_date_time(orders = c("%y-%m-%d", "%y%m%d", "%y-%m-%d %H:%M")),
-             first_snow_melt_d = as.Date(first_snow_melt, origin = "1970-01-01") %>%
-               stringr::str_remove( "1970-") %>% str_c(year,.data, sep = "-") %>% lubridate::parse_date_time( orders = c("%y-%m-%d", "%y%m%d", "%y-%m-%d %H:%M")),
-             last_snow_melt_d = as.Date(last_snow_melt, origin = "1970-01-01") %>%
-               stringr::str_remove( "1970-") %>% str_c(year,.data, sep = "-") %>% lubridate::parse_date_time( orders = c("%y-%m-%d", "%y%m%d", "%y-%m-%d %H:%M")),
-             cont_snow_acc_d = as.Date(cont_snow_acc, origin = "1970-01-01") %>%
-               stringr::str_remove( "1970-") %>% str_c(year,.data, sep = "-") %>% lubridate::parse_date_time( orders = c("%y-%m-%d", "%y%m%d", "%y-%m-%d %H:%M")),
-             first_snow_acc_m = as.Date(first_snow_acc, origin = "1970-01-01") %>%
-               stringr::str_remove( "1970-"),
-             first_snow_melt_m = as.Date(first_snow_melt, origin = "1970-01-01") %>%
-               stringr::str_remove( "1970-"),
-             last_snow_melt_m = as.Date(last_snow_melt, origin = "1970-01-01") %>%
-               stringr::str_remove( "1970-"),
-             cont_snow_acc_m = as.Date(cont_snow_acc, origin = "1970-01-01"))
+             max_swe_doy_d = as.Date(max_swe_doy, origin = paste0(year,'-01-01')) ,
+             first_snow_acc_d = as.Date(first_snow_acc, origin = paste0(year,'-01-01')) ,
+             first_snow_melt_d = as.Date(first_snow_melt, origin = paste0(year,'-01-01')) ,
+             last_snow_melt_d = as.Date(last_snow_melt, origin = paste0(year,'-01-01')),
+             cont_snow_acc_d = as.Date(cont_snow_acc, origin = paste0(year,'-01-01')) ,
+             first_snow_acc_m = as.Date(first_snow_acc, origin = paste0(year,'-01-01')) ,
+             first_snow_melt_m = as.Date(first_snow_melt, origin = paste0(year,'-01-01')) ,
+             last_snow_melt_m = as.Date(last_snow_melt, origin = paste0(year,'-01-01')) ,
+             cont_snow_acc_m = as.Date(cont_snow_acc, origin = paste0(year,'-01-01')))
     }
   })
   
