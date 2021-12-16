@@ -25,7 +25,7 @@ mod_station_server <- function(input, output, session, values){
   ns <- session$ns
   
   #add a path we'll keep referencing
-  addResourcePath('www', system.file('app', package = 'hydroapps'))
+  
   #starting leaflet map
   output$leaf_map <- leaflet::renderLeaflet({
     
@@ -208,7 +208,7 @@ mod_station_server <- function(input, output, session, values){
     # These render the .html files for the modal
   output$frame <- renderUI({
     stats_html <-  tags$iframe(seamless = 'seamless', 
-                               src='www/usgs_stats.html',
+                               src='usgs_stats.html',
                                height=600, width=1248,
                                frameBorder="0")
     stats_html
@@ -558,14 +558,15 @@ app_ui_station <- function(request) {
 golem_add_external_resources <- function(){
   
   add_resource_path(
-    'www', app_sys('app/www')
+    'www', system.file('app', package = 'hydroapps')
   )
   
   tags$head(
     favicon(),
     bundle_resources(
-      path = app_sys('app/www'),
-      app_title = 'hydroapps'
+      path = system.file('app/www', package = 'hydroapps'),
+      app_title = 'hydroapps',
+      package = 'hydroapps'
     ),
     shinyjs::useShinyjs()
     # Add here other external resources
