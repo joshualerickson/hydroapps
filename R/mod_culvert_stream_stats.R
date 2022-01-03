@@ -8,6 +8,7 @@
 #'
 #' @importFrom shiny NS tagList 
 #' @importFrom magrittr "%>%"
+#' @importFrom tidyr tibble
 mod_culvert_map_ui <- function(id){
   ns <- NS(id)
   tagList(leaflet::leafletOutput(ns("ss_maps"), width = '100%', height = '100%'),
@@ -123,23 +124,24 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
         animation = TRUE)}
       req(state)
       
-      df1 <- streamstats::delineateWatershed(clng,clat, rcode = state, crs = 4326)
-      
-      req(df1)
-      
-      df_poly <- df1 %>%
-        streamstats::writeGeoJSON(.data, file.path(tempdir(),"ss_tmp.json"))
-      
-      error <- tryCatch({
-        df_poly %>% geojsonsf::geojson_sf()
+      # df1 <- streamstats::delineateWatershed(clng,clat, rcode = state, crs = 4326)
+      # 
+      # req(df1)
+      # 
+      # df_poly <- df1 %>%
+      #   streamstats::writeGeoJSON(.data, file.path(tempdir(),"ss_tmp.json"))
+      data_sf <- tibble(Lat = clat, Lon = clng)
+      data_sf <- data_sf %>% sf::st_as_sf(coords = c('Lon', 'Lat')) %>%
+        sf::st_set_crs(4326) %>% 
+        sf::st_transform(crs = crs)
+   df_poly <-  tryCatch({
+         wildlandhydRo::batch_StreamStats(data_sf)
       },
       error = function(e) {
         'error'
       })
       
-      
-      
-      if(class(error)[[1]] != 'sf'){shinyalert::shinyalert(
+      if(class(df_poly)[[1]] != 'sf'){shinyalert::shinyalert(
         title = "Server Error",
         text = "No watershed returned for this point, please try again.",
         size = "s",
@@ -155,27 +157,26 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
         imageUrl = "",
         animation = TRUE)}
       
-      req(class(error)[[1]] == 'sf')
+      req(class(df_poly)[[1]] == 'sf')
       
-      df_poly <- df_poly %>% geojsonsf::geojson_sf() %>%
-        sf::st_as_sf() %>% dplyr::mutate(ID = state, long = clng, lat = clat)
+      df_poly <- df_poly %>% dplyr::mutate(ID = state, long = clng, lat = clat)
       
-      wkID <- df1$workspaceID
+      wkID <- df_poly$wkID
       
       incProgress(detail = paste("Computing Basin Characteristics"))
       
-      # Now use {streamstats} to compute basin characteristics
-      
+      # # Now use {streamstats} to compute basin characteristics
+      # 
       stats <- streamstats::computeChars(workspaceID = wkID, rcode = state)
-      
-      # Tidying
+      # 
+      # # Tidying
       stats <- stats$parameters %>% dplyr::mutate(ID = state, workspaceID = wkID)
-      
-      flow_stats <- stats %>% dplyr::select(ID, code, value) %>%
-        tidyr::pivot_wider(names_from = "code")
-      
-      df_poly <- df_poly %>% dplyr::select(Shape_Area, ID, lat, long) %>% dplyr::left_join(flow_stats, by = "ID")
-      
+      # 
+      # flow_stats <- df_poly %>% dplyr::select(ID, code, value) %>%
+      #   tidyr::pivot_wider(names_from = "code")
+
+      # df_poly <- df_poly %>% dplyr::select(Shape_Area, ID, lat, long) %>% dplyr::left_join(flow_stats, by = "ID")
+      # 
       
       
       
@@ -217,7 +218,9 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
     )
    
     # set up reactive leaflet map
+    
     #map_leaf <- reactive({
+    
     observe({
      
       if(class(ss_list$df_poly)[[1]] == 'sf'){

@@ -415,7 +415,7 @@ mv_stats_gt %>%
 :::
 <br>
 <center>
-```{r echo=F, message = F, warning=F,fig.align='center',  error=F}
+```{r echo=F, message = F, warning=F}
 if(!is.null(hr_flow)){
 g <- ggplot(data = joined_flows, aes(Date, value, color = name, linetype = name)) + 
   ggplot2::geom_line(size = 1, show.legend = F) + 
@@ -439,8 +439,8 @@ plotly::ggplotly(g)
 ```
 </center>
 <br>
-
-```{r, echo=FALSE, warning=FALSE,error=F, message = F, fig.align='center', fig.width=11, fig.height=6}
+<center>
+```{r, echo=FALSE, warning=FALSE,error=F, message = F, fig.align='center', fig.width=11}
 if(dv_report[1,]$Station %in% 'Tobacco River near Eureka MT'){
   
   dv_report2 <- dv_report %>% mutate(current_daily_mean_flow = Flow) %>% 
@@ -463,12 +463,12 @@ plotly::ggplotly(g1)
 
 
 ```
-
+</center>
 <br>
-
-```{r,fig.align='center', echo=F,error=F, message=F}
+<center>
+```{r, echo=F,error=F, message=F}
 month_abb <- data.frame(month = seq(1,12,1), month_abb = month.abb)
-nwis_sites_df %>% wildlandhydRo::wyUSGS() %>% 
+count_peak <- nwis_sites_df %>% wildlandhydRo::wyUSGS() %>% 
   mutate(month = lubridate::month(peak_dt)) %>% 
   dplyr::count(month) %>% filter(!is.na(month)) %>% 
   dplyr::full_join(month_abb, by = 'month') %>% 
@@ -488,8 +488,10 @@ nwis_sites_df %>% wildlandhydRo::wyUSGS() %>%
         axis.title.y = ggplot2::element_text(size = 10.5),
         plot.subtitle = ggplot2::element_text(size = 10.5),
         legend.position = 'none')
-```
 
+plotly::ggplotly(count_peak)
+```
+</center>
 <br>
 <br>
 <center>

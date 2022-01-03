@@ -36,6 +36,22 @@ run_app <- function(app,
         server = app_server_snotel
       ), 
       golem_opts = list(...))
+  } else if (app == 'nldi') {
+    with_golem_options(
+      app = shinyApp(
+        ui = app_ui_nldi, 
+        server = app_server_nldi
+      ), 
+      golem_opts = list(...))
+    
+  } else if (app == 'nhdplus') {
+    with_golem_options(
+      app = shinyApp(
+        ui = app_ui_hydro, 
+        server = app_server_hydro
+      ), 
+      golem_opts = list(...))
+    
   }
   
 }

@@ -105,20 +105,21 @@ mod_station_server <- function(input, output, session, values){
         values$maxMonth <- max(as.integer(input$month_selection), na.rm = T)
         values$minMonth <- as.character(values$minMonth)
         values$maxMonth <- as.character(values$maxMonth)
-        print(values$minMonth)
-        print(values$maxMonth)
+        print(input$month_selection)
         values$minq <- min(input$q_slider, na.rm = T)
         values$maxq <- max(input$q_slider, na.rm = T)
         values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
             filter(
-              month %in% input$month_selection,
+              month %in% as.integer(input$month_selection),
               wy %in% input$wy_selection,
               Flow >= values$minq,
               Flow <= values$maxq
             )
+        print(values$nwis_sites_df)
         months_test <- input$month_selection
         char_test <- as.character(1:12)
         values$all_months <- isTRUE(all.equal(months_test,char_test))
+        print(values$all_months)
       }
       
       
@@ -227,9 +228,8 @@ mod_station_server <- function(input, output, session, values){
       tags$style(
         type = 'text/css',
         '.modal-dialog {
-    width: max-content;
-    margin: 100px;
-    margin-left: calc(20%);}'
+    width: fit-content !important;
+    margin: 100px;}'
       ),
         tags$style(
           type = 'text/css',
@@ -391,9 +391,14 @@ mod_station_server <- function(input, output, session, values){
   output$bf_plot <- plotly::renderPlotly({
     # 
     
-    
+    if(values$all_months){
     bflow <- values$nwis_sites_df  %>% 
-      dplyr::add_count(wy) %>% dplyr::filter(n >= 355) %>% 
+      dplyr::add_count(wy) %>% dplyr::filter(n >= 355)
+    } else {
+      bflow <- values$nwis_sites_df  %>% 
+      mutate(bf = lfstat::baseflow(Flow))
+    }
+    bflow <- bflow %>% 
       mutate(bf = lfstat::baseflow(Flow)) %>% 
       dplyr::group_by(wy) %>% 
       dplyr::mutate(bfi = bf/Flow) %>% 
@@ -442,7 +447,8 @@ mod_station_server <- function(input, output, session, values){
     
     if(values$all_months){
       
-      values$peak_df <- values$nwis_sites_df %>% wildlandhydRo::wyUSGS()
+      values$peak_df <- values$nwis_sites_df %>% 
+        dplyr::add_count(wy) %>% dplyr::filter(n >= 355) %>% wildlandhydRo::wyUSGS()
       
       peak_flow_mk <- values$peak_df %>% 
         dplyr::pull(Peak) %>% 
@@ -455,11 +461,11 @@ mod_station_server <- function(input, output, session, values){
       
     } else {
       
-      nwis_sites_df <- values$nwis_sites_df %>% 
-        dplyr::add_count(wy) %>% dplyr::filter(n >= 355) %>% wildlandhydRo::wymUSGS()
+      nwis_sites_df <- values$nwis_sites_df %>%  wildlandhydRo::wymUSGS()
+      
       values$peak_df <-  nwis_sites_df %>% 
         rename(Peak = 'Maximum', peak_dt = 'year_month')%>% dplyr::group_by(wy) %>% 
-        slice_max(Peak) %>% 
+        slice_max(Peak,with_ties = FALSE) %>% 
         ungroup()
       
       peak_flow_mk <- values$peak_df  %>% 

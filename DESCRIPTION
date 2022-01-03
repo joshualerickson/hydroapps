@@ -55,7 +55,13 @@ Imports:
     dataRetrieval,
     snotelr,
     thematic,
-    rlang
+    rlang,
+    promises,
+    nhdplusTools,
+    miniUI,
+    purrr,
+    units,
+    ggtext
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

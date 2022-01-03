@@ -6,4 +6,6 @@ utils::globalVariables(c("Date", "Description", "Distribution", "Flow", "ID", "I
                          "lat", "long", "max_swe", "max_swe_doy", "month", "month_day", "n", "name",
                          "peak_dt", "site_no", "snow_water_equivalent", "stab", "state.abb", "state.name",
                          "stn", "swe_max", "swe_mean", "temp", "temperature", "temperatureUnit",
-                         "value", "wind", "windDirection", "windSpeed", "wy", "year", "year_month"))
+                         "value", "wind", "windDirection", "windSpeed", "wy", "year", "year_month",
+                         "crs", "mi", "acres", 'characteristic_id', 'characteristic_value', "featureid",
+                         "data", "chars", "COMID"))

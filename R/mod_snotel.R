@@ -244,9 +244,8 @@ mod_snotel_server <- function(input, output, session, values){
       tags$style(
         type = 'text/css',
         '.modal-dialog {
-    width: max-content;
-    margin: 100px;
-    margin-left: calc(20%);}'
+    width: fit-content !important;
+    margin: 100px;}'
       ),
     tags$style(
       type = 'text/css',

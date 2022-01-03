@@ -451,14 +451,16 @@ if(dv_report[1,]$Station %in% 'Tobacco River near Eureka MT'){
                                 startDate = max(usgs_ggplot_data_not_filtered()$Date)- 365,
                                 endDate = max(usgs_ggplot_data_not_filtered()$Date)) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
-        axis.text.y = ggplot2::element_text(size = 10))
+        axis.text.y = ggplot2::element_text(size = 10)) +
+    ggplot2::scale_y_continuous()
    plotly::ggplotly(quart)
  
 } else {
   
  quart <- wildlandhydRo::plot_reportUSGS(dv_report) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
-        axis.text.y = ggplot2::element_text(size = 10))
+        axis.text.y = ggplot2::element_text(size = 10))+
+    ggplot2::scale_y_continuous()
  plotly::ggplotly(quart)
 }
 
