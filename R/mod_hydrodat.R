@@ -32,11 +32,12 @@ Shiny.addCustomMessageHandler(
   })
 "
     )),
-    miniUI::miniPage( miniUI::miniContentPanel(leaflet::leafletOutput(ns('leaf_map'), height = '97%'),
-                                               height=NULL, width=NULL),
+    miniUI::miniPage( miniUI::miniContentPanel(
+      leaflet::leafletOutput(ns('leaf_map'), height = '97%'),
+                      height=NULL, width=NULL),
                       miniUI::gadgetTitleBar(title = '',
                                              right = miniUI::miniTitleBarButton(ns("done"), "Done", primary = TRUE)
-                      ),
+                      )),
                       tags$script(HTML(
                         "
 // close browser window on session end
@@ -54,7 +55,7 @@ $(document).on('shiny:disconnected', function() {
                       ))
     )
     
-  )
+  
 }
 
 #' station Server Function
@@ -103,6 +104,9 @@ mod_hydro_server <- function(input, output, session, values){
                                      polygonOptions = leaflet.extras::drawRectangleOptions(repeatMode = F,
                                                                                            shapeOptions = leaflet.extras::drawShapeOptions(fillOpacity = 0, opacity = .75)), targetGroup = 'draw') %>%
       leaflet::addControl(html = shiny::actionButton(ns("deletebtn"), "remove drawn"),
+                          position = 'bottomleft',
+                          className = 'fieldset {border:0;}') %>%
+      leaflet::addControl(html = shiny::actionButton(ns("dowload"), "download"),
                           position = 'bottomleft',
                           className = 'fieldset {border:0;}') %>%
       leaflet::setView(lat = 37.0902, lng = -95.7129, zoom = 5)  %>%
@@ -378,14 +382,14 @@ observeEvent(
 )
 
 
-  #used to stop the app via button and retain selections
-  observeEvent(input$done, {
-    
-    shiny::stopApp(
-      values$hydro_data_list
-    )
-    
-  })
+  # #used to stop the app via button and retain selections
+  # observeEvent(input$done, {
+  #   
+  #   shiny::stopApp(
+  #     values$hydro_data_list
+  #   )
+  #   
+  # })
   
   # stops app but doesn't keep selections
   shiny::observeEvent(input$cancel, {
@@ -412,7 +416,7 @@ app_ui_hydro <- function(request) {
     golem_add_external_resources(),
     
   
-mod_hydro_ui("hydro_ui_1")
+    mod_hydro_ui("hydro_ui_1")
 
   )
 }
@@ -437,7 +441,7 @@ golem_add_external_resources <- function(){
       path = app_sys('app/www'),
       app_title = 'hydroapps'
     ),
-    shinyjs::useShinyjs()
+    
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert() 
   )
@@ -454,5 +458,28 @@ app_server_hydro <- function( input, output, session ) {
   values <- reactiveValues()
 
   callModule(mod_hydro_server, "hydro_ui_1", values = values)
+  
+  output$download <- downloadHandler(
+    filename = function() {
+        paste0("data.zip")
+    },
+    content = function(file) {
+      
+      tmp.path <- dirname(file)
+      name.base <- file.path(tmp.path)
+      #name.base <- file.path(tmp.path)
+      name.glob <- paste0(name.base, ".*")
+      name.shp  <- paste0(name.base, ".shp")
+      name.zip  <- paste0(name.base, ".zip")
+      
+      if (length(Sys.glob(name.glob)) > 0) file.remove(Sys.glob(name.glob))
+      
+        st_write(values$hydro_data_list, dsn = name.shp, layer = "shpExport",
+                 driver = "ESRI Shapefile", quiet = TRUE)
+        
+        zip::zipr(zipfile = name.zip, files = Sys.glob(name.glob))
+        req(file.copy(name.zip, file))
+    }
+  )
   
 }

@@ -442,22 +442,23 @@ plotly::ggplotly(g)
 <center>
 ```{r, echo=FALSE, warning=FALSE,error=F, message = F, fig.align='center', fig.width=11}
 if(dv_report[1,]$Station %in% 'Tobacco River near Eureka MT'){
-  
-  dv_report2 <- dv_report %>% mutate(current_daily_mean_flow = Flow) %>% 
-    filter(Date <= max(Date), Date >= max(Date)-365)
-g1 <- plot_reportUSGS_custom(dv_report2) +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
-                 axis.text.y = ggplot2::element_text(size = 10)) + 
-  ggplot2::scale_y_continuous()
-plotly::ggplotly(g1)
 
+  quart <- wildlandhydRo::plot_USGSdrought(usgs_ggplot_data_not_filtered(),
+                                rolln = 1, 
+                                startDate = max(usgs_ggplot_data_not_filtered()$Date)- 365,
+                                endDate = max(usgs_ggplot_data_not_filtered()$Date)) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
+        axis.text.y = ggplot2::element_text(size = 10)) +
+    ggplot2::scale_y_continuous()
+   plotly::ggplotly(quart)
+ 
 } else {
   
-  g1 <- wildlandhydRo::plot_reportUSGS(dv_report) +
+ quart <- wildlandhydRo::plot_reportUSGS(dv_report) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10),
-        axis.text.y = ggplot2::element_text(size = 10)) + 
+        axis.text.y = ggplot2::element_text(size = 10))+
     ggplot2::scale_y_continuous()
-  plotly::ggplotly(g1)
+ plotly::ggplotly(quart)
 }
 
 
