@@ -1,9 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# wildlandhydRo <a><img src='man/figures/featured-hex.png' align="right" height="131.5" /></a>
-
-# hydroapps
+# hydroapps <a><img src='man/figures/featured-hex.png' align="right" height="131.5" /></a>
 
 <!-- badges: start -->
 
@@ -18,6 +16,15 @@ and [NRCS API](https://wcc.sc.egov.usda.gov/reportGenerator/) wouldn’t
 be possible with out it (much thanks). However, this package is highly
 experimental and is used mostly by myself but I think it’s worth
 sharing! Please enjoy and contributions are welcome!
+
+## Warning!
+
+If having trouble with installation, try downloading
+[{wildlandhydRo}](https://github.com/joshualerickson/wildlandhydRo) and
+[{streamstats}](https://github.com/markwh/streamstats) first.
+
+Also, the reports within the interactive map take a **minute or two** to
+generate.
 
 ## Goals
 

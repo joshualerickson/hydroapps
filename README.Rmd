@@ -12,14 +12,18 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 ```
-# wildlandhydRo <a><img src='man/figures/featured-hex.png' align="right" height="131.5" /></a>
-# hydroapps
-
+# hydroapps <a><img src='man/figures/featured-hex.png' align="right" height="131.5" /></a>
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 The goal of {hydroapps} is to to create apps for resource management in the context of hydrology monitoring and reporting. This package relies heavily on [USGS API](https://www.usgs.gov/products/data-and-tools/apis) and [NRCS API](https://wcc.sc.egov.usda.gov/reportGenerator/) wouldn't be possible with out it (much thanks). However, this package is highly experimental and is used mostly by myself but I think it's worth sharing! Please enjoy and contributions are welcome!
+
+## Warning!  
+
+If having trouble with installation, try downloading [{wildlandhydRo}](https://github.com/joshualerickson/wildlandhydRo) and [{streamstats}](https://github.com/markwh/streamstats) first.  
+
+Also, the reports within the interactive map take a **minute or two** to generate.
 
 ## Goals  
 
