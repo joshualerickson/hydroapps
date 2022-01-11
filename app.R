@@ -4,4 +4,4 @@
 
 pkgload::load_all(export_all = FALSE,helpers = FALSE,attach_testthat = FALSE)
 options( "golem.app.prod" = TRUE)
-hydroapps::run_app('streamstats') # add parameters here (if any)
+hydroapps::run_app('snotel_stats') # add parameters here (if any)

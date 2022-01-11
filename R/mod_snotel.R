@@ -208,7 +208,7 @@ mod_snotel_server <- function(input, output, session, values){
       
       incProgress(amount = 3/4, 'rendering stats')
       
-      rmarkdown::render(app_sys('app/www/snotel_stats.Rmd'))
+      
       
       values$snotel_sites_df <- snotel_ggplot_data_not_filtered() %>%
         filter(
@@ -221,13 +221,14 @@ mod_snotel_server <- function(input, output, session, values){
       
       values$all_months <- TRUE
       
+      rmarkdown::render(app_sys('app/www/snotel_stats.Rmd'))
+      
     })
   })
   
   # These render the .html files for the modal
   output$frame <- renderUI({
     
-    html_path <- 
     stats_html <-  tags$iframe(src="www/snotel_stats.html", height=600, width=1248,frameBorder="0")
     stats_html
   })
@@ -297,25 +298,30 @@ mod_snotel_server <- function(input, output, session, values){
                                                                   plotly::plotlyOutput(ns('swegraph'),  height = 600) %>%
                                                                     shinycssloaders::withSpinner(),
                                                                   radioButtons(ns('sweg_sel'), 'Choose graph type', choices = c('Compact', 'Long'), selected = 'Compact',
-                                                                               inline = TRUE)),
+                                                                               inline = TRUE),
+                                                                  downloadButton(ns('sday'),'download csv')),
                                                          tabPanel(title = 'Time-Series',
                                                                   plotly::plotlyOutput(ns('ts_plot'), height = 600) %>%
                                                                     shinycssloaders::withSpinner(),
                                                                   shinyWidgets::pickerInput(ns("swe_metric"), "Pick a metric", selected = "Maximum",  options = list(`actions-box` = TRUE), 
-                                                                                            choices = c("Maximum", "Mean"))),
+                                                                                            choices = c("Maximum", "Mean")),
+                                                                  downloadButton(ns('smonth'),'download csv')),
                                                          tabPanel(title = 'SWE Duration Curve',
                                                                   plotly::plotlyOutput(ns('fdc'), height = 600) %>%
-                                                                    shinycssloaders::withSpinner()),
+                                                                    shinycssloaders::withSpinner(),
+                                                                  downloadButton(ns('fdc_sno'),'download csv')),
                                                          tabPanel(title = 'Phenology',
                                                                   plotly::plotlyOutput(ns('phen'), height = 600) %>%
                                                                     shinycssloaders::withSpinner(),
                                                                   shinyWidgets::pickerInput(ns("phen_metric"), "Pick a Time", selected = "First Snow",  options = list(`actions-box` = TRUE), 
-                                                                                            choices = c("First Snow Accumulation", "Last Snow Melt"))),
+                                                                                            choices = c("First Snow Accumulation", "Last Snow Melt")),
+                                                                  downloadButton(ns('phen_sno'),'download csv')),
                                                          tabPanel(title = "SWE Frequency",
                                                                   plotly::plotlyOutput(ns('freq'), height = 600) %>%
                                                                     shinycssloaders::withSpinner(),
                                                                   radioButtons(ns('ff_sel'), 'Choose graph type', choices = c('Time Series', 'Return Interval'), selected = 'Time Series',
-                                                                               inline = TRUE)),
+                                                                               inline = TRUE),
+                                                                  downloadButton(ns('freq_sno'),'download csv')),
                                                          tabPanel(title = 'Forecast',
                                                                   DT::dataTableOutput(ns('nws_table')))),
       )),
@@ -327,6 +333,38 @@ mod_snotel_server <- function(input, output, session, values){
   observeEvent(input$done, {
     removeModal()
   })
+  
+  dlHandler_cust <- function(event) {
+    observe(
+      {
+        
+        output[[event]] <- downloadHandler(
+          
+          filename = function(){
+            if(event == 'ss'){
+              'myfile.html'
+            } else {'myfile.csv'}
+          },
+          
+          content = function(file) {
+            
+            switch(event,
+                   sday = write.csv(values$snotel_sites_df, file),
+                   smonth = write.csv(values$snotel_sites_df_month, file),
+                   phen_sno = write.csv(phenology(), file),
+                   fdc_sno = write.csv(values$fdc, file),
+                   freq_sno = write.csv(values$freq, file)
+            )
+          }
+        )
+      })
+  }
+  
+  dlHandler_cust('sday')
+  dlHandler_cust('smonth')
+  dlHandler_cust('phen_sno')
+  dlHandler_cust('fdc_sno')
+  dlHandler_cust('freq_sno')
   
   #inline radio buttons (reactive)
   
@@ -384,7 +422,7 @@ mod_snotel_server <- function(input, output, session, values){
   
   output$ts_plot <- plotly::renderPlotly({
     
-    snotel_sites_df <- values$snotel_sites_df %>% 
+    values$snotel_sites_df_month <- values$snotel_sites_df %>% 
       group_by(wy,month) %>% 
       mutate(swe_max = max(snow_water_equivalent),
              swe_mean = mean(snow_water_equivalent)) %>% 
@@ -393,10 +431,10 @@ mod_snotel_server <- function(input, output, session, values){
     
     if (input$swe_metric == "Maximum")  {
       
-      print(plotly::ggplotly(ggplot(snotel_sites_df, aes(Date, swe_max)) +
+      print(plotly::ggplotly(ggplot(values$snotel_sites_df_month, aes(Date, swe_max)) +
                                geom_line(size = .5) +
                                geom_point() + geom_smooth(alpha = 0.1,se = TRUE) +
-                               labs(title = paste0(snotel_sites_df$site_name[1], " Monthly Maximum SWE (in)"),
+                               labs(title = paste0(values$snotel_sites_df_month$site_name[1], " Monthly Maximum SWE (in)"),
                                     y = "Maximum SWE (in) per Month", x = "Water Year")+ theme_bw()+
                                ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10.5),
                                               axis.title.x = ggplot2::element_text(size = 12.5),
@@ -408,10 +446,10 @@ mod_snotel_server <- function(input, output, session, values){
       
     } else if (input$swe_metric == "Mean") {
       
-      print(plotly::ggplotly(ggplot(snotel_sites_df, aes(Date, swe_mean)) +
+      print(plotly::ggplotly(ggplot(values$snotel_sites_df_month, aes(Date, swe_mean)) +
                                geom_line(size = .5) +
                                geom_point() + geom_smooth(alpha = 0.1,  se = TRUE) +
-                               labs(title = paste0(snotel_sites_df$site_name[1], " Monthly Mean SWE (in)"),
+                               labs(title = paste0(values$snotel_sites_df_month$site_name[1], " Monthly Mean SWE (in)"),
                                     y = "Mean SWE (in) per Month", x = "Water Year")+ theme_bw()+
                                ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10.5),
                                               axis.title.x = ggplot2::element_text(size = 12.5),
@@ -494,8 +532,10 @@ mod_snotel_server <- function(input, output, session, values){
     
     validate(need(input$leaf_map_marker_click$id, 'Waiting for a Station to be clicked...'))
     
-    fdc_plot <- plotly::ggplotly(wildlandhydRo::plot_USGSfdc(values$snotel_sites_df  %>%
-                                                               mutate(Flow = snow_water_equivalent)) + 
+    get_fdc <- wildlandhydRo::plot_USGSfdc(values$snotel_sites_df  %>%
+                                                               mutate(Flow = snow_water_equivalent))
+    values$fdc <- get_fdc$data
+    fdc_plot <- plotly::ggplotly( get_fdc + 
                                    labs(y = 'SWE (in)',
                                         title = 'SWE Duration Curve')+
                                    ggplot2::theme(axis.text.x = ggplot2::element_text(size = 10.5),
@@ -705,6 +745,8 @@ golem_add_external_resources <- function(){
 #' @param input,output,session Internal parameters for {shiny}. 
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @importFrom utils write.csv
+#' @importFrom sf st_write
 #' @noRd
 app_server_snotel <- function( input, output, session ) {
   # List the first level callModules here

@@ -38,7 +38,7 @@ month_station <- lubridate::as_date(Sys.Date()) %>% lubridate::month()
 
 year_station <- lubridate::as_date(Sys.Date()) %>% lubridate::year()
 
-day_station <- lubridate::as_date(Sys.Date()) %>% lubridate::day()
+day_station <- lubridate::as_date(Sys.Date()) %>%  lubridate::day()
 
 if(one_row$Station %in% 'Tobacco River near Eureka MT'){
   
@@ -54,34 +54,35 @@ if(one_row$Station %in% 'Tobacco River near Eureka MT'){
   ungroup() %>% 
   group_by(month_abb) %>% slice(n=1) %>% ungroup()%>% 
   mutate(across(p05_va:p95_va, round, 0))
-   max_flow <- nwis_sites_df %>% 
+  
+   max_flow <- usgs_ggplot_data_not_filtered() %>% 
   filter(month == month_station, day == day_station) %>% 
   slice_max(Flow) %>% slice(n = 1)
   
-  max_dates <- nwis_sites_df %>% 
+  max_dates <- usgs_ggplot_data_not_filtered() %>% 
   filter(month == month_station, day == day_station) %>% 
     slice_max(Flow) %>% 
     pull(year)
   
-  min_flow <- nwis_sites_df %>% 
+  min_flow <- usgs_ggplot_data_not_filtered() %>% 
   filter(month == month_station, day == day_station) %>% 
   slice_min(Flow) %>% slice(n = 1)
   
-  min_dates <- nwis_sites_df %>% 
+  min_dates <- usgs_ggplot_data_not_filtered() %>% 
   filter(month == month_station, day == day_station) %>% 
     slice_min(Flow) %>% 
     pull(year)
   
   
   
-dv_report <- nwis_sites_df %>% 
+dv_report <- usgs_ggplot_data_not_filtered() %>% 
   group_by(Station, month_day) %>% 
   summarise(quantiles = quantile(Flow, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
                                                                   0.75,0.80, 0.90, 0.95), na.rm = TRUE),
             breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
                         "p80_va", "p90_va", "p95_va")) %>% 
   pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
-  right_join(nwis_sites_df, by = c("Station", "month_day")) %>% 
+  right_join(usgs_ggplot_data_not_filtered(), by = c("Station", "month_day")) %>% 
   mutate(across(contains("_va"), round, 0)) %>% 
   ungroup() %>% 
   group_by(Station, month_day) %>% 

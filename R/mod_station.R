@@ -10,6 +10,7 @@
 #' @importFrom dplyr filter select mutate slice_max ungroup rename
 #' @importFrom ggplot2 geom_smooth geom_point geom_line aes
 #' @importFrom grDevices hcl.colors
+#' @importFrom promises "%>%" future_promise
 #' 
 mod_station_ui <- function(id){
   ns <- NS(id)
@@ -52,6 +53,7 @@ mod_station_server <- function(input, output, session, values){
     withProgress(value = 0.5, message = paste0('loading ', input$location_map, ' gauging stations...'),{
     state_names <- data.frame(stn = state.name, stab = state.abb)
     state_select <- state_names %>% filter(stn == input$location_map) %>% dplyr::pull(stab)
+    
     current <- dataRetrieval::whatNWISsites(stateCD = state_select) %>% filter(nchar(site_no) <= 8)
     
     current <- current %>% filter(site_no %in% hydroapps::usgs_sites_df$site_no)
@@ -115,11 +117,11 @@ mod_station_server <- function(input, output, session, values){
               Flow >= values$minq,
               Flow <= values$maxq
             )
-        print(values$nwis_sites_df)
+        
         months_test <- input$month_selection
         char_test <- as.character(1:12)
         values$all_months <- isTRUE(all.equal(months_test,char_test))
-        print(values$all_months)
+        
       }
       
       
@@ -132,31 +134,34 @@ mod_station_server <- function(input, output, session, values){
   usgs_ggplot_data_not_filtered <- reactive({
     site <- input$leaf_map_marker_click$id
    
-      
+     
       nwis_sites_df <- wildlandhydRo::batch_USGSdv(sites = site) %>% 
-        mutate(month_day = paste0('0000-',month_day),
-               month_day = lubridate::as_date(month_day))
+          mutate(month_day = paste0('0000-',month_day),
+                 month_day = lubridate::as_date(month_day))
       
       if(nwis_sites_df[1,]$Station %in% "Tobacco River at Eureka, MT"){
-        nwis_sites_df <- wildlandhydRo::batch_USGSdv(sites = '12301300') %>% 
+        nwis_sites_df <- wildlandhydRo::batch_USGSdv(sites = '12301300') %>%
           mutate(month_day = paste0('0000-',month_day),
-                 month_day = lubridate::as_date(month_day)) %>% 
+                 month_day = lubridate::as_date(month_day)) %>%
           dplyr::bind_rows(nwis_sites_df)
-        
+
         nwis_sites_df <- nwis_sites_df[!duplicated(nwis_sites_df$Date),]
-        
+
         nwis_sites_df <- nwis_sites_df %>% dplyr::mutate(Station = 'Tobacco River near Eureka MT',
-                                                         site_no = '12301250')
-      } 
+                                                         site_no = '12301250')}
+     
+
+        nwis_sites_df
       
-      nwis_sites_df
+      
     })
   
   #getting an idea of full years
   
   usgs_ggplot_data <- reactive({
-    usgs_ggplot_data_not_filtered()  %>% 
-      dplyr::add_count(wy) %>% dplyr::filter(n >= 355)
+    usgs_ggplot_data_not_filtered() %>%
+      dplyr::add_count(wy) %>%
+      dplyr::filter(n >= 355)
   })
   
   
@@ -186,9 +191,6 @@ mod_station_server <- function(input, output, session, values){
     values$minMonth <- 1
     values$maxMonth <- 12
     
-    incProgress(amount = 3/4, 'rendering stats')
-    
-    rmarkdown::render(app_sys('app/www/usgs_stats.Rmd'))
     
     values$nwis_sites_df <- usgs_ggplot_data_not_filtered() %>%
         filter(
@@ -200,6 +202,11 @@ mod_station_server <- function(input, output, session, values){
         )
     
     values$all_months <- TRUE
+    
+    incProgress(amount = 3/4, 'rendering stats')
+    
+    rmarkdown::render(app_sys('app/www/usgs_stats.Rmd'))
+    
   })
     
 
@@ -213,8 +220,6 @@ mod_station_server <- function(input, output, session, values){
                                height=600, width=1248,
                                frameBorder="0")
     stats_html
-# 
-#     includeHTML(values$html_path)
   })
   
   #Modal that pops up
@@ -223,8 +228,8 @@ mod_station_server <- function(input, output, session, values){
     
     showModal(modalDialog(
       title = "Explore the Station",
-      easyClose = TRUE,
-      footer = NULL,
+      easyClose = FALSE,
+      footer = actionButton(ns('done'),'Done'),
       tags$style(
         type = 'text/css',
         '.modal-dialog {
@@ -274,66 +279,92 @@ mod_station_server <- function(input, output, session, values){
                           actionButton(ns('change_params'), 'Submit Changes', class = 'btn-submit')),
                           
       shinydashboard::box(width=10,fluidPage(tabsetPanel(id = 'exploring_hydrograph',              
-                                         tabPanel(title = "Summary Stats",
+                                         tabPanel(title = "Summary Stats", value = 'ss',
                                                   htmlOutput(ns('frame')) %>%
                                                     shinycssloaders::withSpinner()
                                                   ),                       
-                                         tabPanel(title = "Hydrograph",
+                                         tabPanel(title = "Hydrograph-Daily", 
                                                   plotly::plotlyOutput(ns('hydrograph'),  height = 600) %>%
                                                     shinycssloaders::withSpinner(),
-                                                  radioButtons(ns('hyg_sel'), 'Choose graph type', choices = c('Compact', 'Long'), selected = 'Compact',
-                                                               inline = TRUE)),
-                                         tabPanel(title = 'Time-Series',
+                                                  downloadButton(ns('hd'),'download csv')),
+                                         tabPanel(title = 'Hydrograph-Monthly', 
                                                   plotly::plotlyOutput(ns('ts_plot'), height = 600) %>%
                                                     shinycssloaders::withSpinner(),
                                                   shinyWidgets::pickerInput(ns("usgs_metric"), "Pick a metric", selected = "Maximum",  options = list(`actions-box` = TRUE), 
-                                                              choices = c("Maximum", "Minimum", "Mean", "Median"))),
-                                         tabPanel(title = 'BFI',
+                                                              choices = c("Maximum", "Minimum", "Mean", "Median")),
+                                                  downloadButton(ns('hm'),'download csv')),
+                                         tabPanel(title = 'BFI', 
                                                   plotly::plotlyOutput(ns('bf_plot'), height = 600) %>%
-                                                    shinycssloaders::withSpinner()),
-                                         tabPanel(title = 'Flow Duration Curve',
+                                                    shinycssloaders::withSpinner(),
+                                                  downloadButton(ns('bfi'),'download csv')),
+                                         tabPanel(title = 'Flow Duration Curve', 
                                                   plotly::plotlyOutput(ns('fdc'), height = 600) %>%
-                                                    shinycssloaders::withSpinner()),
+                                                    shinycssloaders::withSpinner(),
+                                                  downloadButton(ns('fdc_dl'),'download csv')),
                                          tabPanel(title = "Flood Frequency",
                                                   plotly::plotlyOutput(ns('freq'), height = 600) %>%
                                                     shinycssloaders::withSpinner(),
                                                   radioButtons(ns('ff_sel'), 'Choose graph type', choices = c('Time Series', 'Return Interval'), selected = 'Time Series',
-                                                               inline = TRUE)),
+                                                               inline = TRUE),
+                                                  downloadButton(ns('ff'),'download csv')),
                                          tabPanel(title = 'Forecast',
                                                   uiOutput(ns('forecast')))),
-      )),
-      tags$div(class = 'btn-modal',actionButton(ns('done'), 'Done', class = 'btn-modal'))
+      ))
     ))
+    
+    
 
   })
   
   observeEvent(input$done, {
+    
     removeModal()
+    values$nwis_sites_df <- NULL
+    values$peak_df <- NULL
+    values$freq <- NULL
   })
-   
+
+  
+  dlHandler_cust <- function(event) {
+    observe(
+      {
+        
+  output[[event]] <- downloadHandler(
+    
+    filename = function(){
+      if(event == 'ss'){
+        'myfile.html'
+      } else {'myfile.csv'}
+      },
+    
+    content = function(file) {
+     
+     switch(event,
+     hd = write.csv(values$nwis_sites_df, file),
+     hm = write.csv(values$nwis_sites_df_month, file),
+     bfi = write.csv(values$bflow, file),
+     fdc_dl = write.csv(values$fdc, file),
+     ff = write.csv(values$freq, file)
+      )
+    }
+  )
+      })
+  }
+  
+  dlHandler_cust('hd')
+  dlHandler_cust('hm')
+  dlHandler_cust('bfi')
+  dlHandler_cust('fdc_dl')
+  dlHandler_cust('ff')
+  
   #inline radio buttons (reactive)
   
   ff_sel_reac <- reactive(input$ff_sel)
-  hyg_sel_reac <- reactive(input$hyg_sel)
   
   #Hydrograph-plot
   
-  output$hydrograph <- plotly::renderPlotly({
-    validate(need(input$leaf_map_marker_click$id, 'Waiting for a Station to be clicked...'))
 
-    
-    if(hyg_sel_reac() == 'Compact'){
-    hydrograph_plot <- plotly::ggplotly((values$nwis_sites_df %>%
-                                           ggplot() + 
-                                           geom_line(aes(month_day, Flow, group = wy,color = wy,label = Date), size = .5) +
-                                           labs(title = paste0(values$nwis_sites_df$Station))+
-                                           theme_bw() + ggplot2::scale_color_gradientn(colors = hcl.colors(n = 11, palette = 'Zissou 1'))
-    ), tooltip=c("Flow", "Date"))
-    
-    print(hydrograph_plot)
-    
-    } else if (hyg_sel_reac() == 'Long'){
-      
+      output$hydrograph <- plotly::renderPlotly({
       hydrograph_plot <- plotly::ggplotly((values$nwis_sites_df %>%
                                              ggplot() + 
                                              geom_line(aes(Date, Flow,label = Date), size = .5) +
@@ -341,46 +372,45 @@ mod_station_server <- function(input, output, session, values){
                                              theme_bw() 
       ), tooltip=c("Flow", "Date"))
       
-      print(hydrograph_plot)
-    }
-    
-  })
+      print(hydrograph_plot) })
+      
+ 
   
   #TS-Plot
   
   output$ts_plot <- plotly::renderPlotly({
     
-    nwis_sites_df <- values$nwis_sites_df %>% wildlandhydRo::wymUSGS()
+    values$nwis_sites_df_month <- values$nwis_sites_df %>% wildlandhydRo::wymUSGS()
 
           if (input$usgs_metric == "Maximum")  {
 
-            print(plotly::ggplotly(ggplot(nwis_sites_df, aes(year_month, Maximum)) +
+            print(plotly::ggplotly(ggplot(values$nwis_sites_df_month, aes(year_month, Maximum)) +
               geom_line(size = .5) +
               geom_point() + geom_smooth(alpha = 0.1,se = TRUE) +
-              labs(title = paste0(nwis_sites_df$Station[1], " Monthly Maximum Discharge (cfs)"),
+              labs(title = paste0(values$nwis_sites_df_month$Station[1], " Monthly Maximum Discharge (cfs)"),
                    y = "Maximum Discharge (cfs) per Month", x = "Water Year")+ theme_bw()))
 
           } else if (input$usgs_metric == "Minimum") {
 
-            print(plotly::ggplotly(ggplot(nwis_sites_df, aes(year_month, Minimum)) +
+            print(plotly::ggplotly(ggplot(values$nwis_sites_df_month, aes(year_month, Minimum)) +
               geom_line(size = .5) +
               geom_point() + geom_smooth(alpha = 0.1, se = TRUE) +
-              labs(title = paste0(nwis_sites_df$Station[1], " Monthly Minimum Discharge (cfs)"),
+              labs(title = paste0(values$nwis_sites_df_month$Station[1], " Monthly Minimum Discharge (cfs)"),
                    y = "Minimum Discharge (cfs) per Month", x = "Water Year")+ theme_bw()))
           } else if (input$usgs_metric == "Mean") {
 
-            print(plotly::ggplotly(ggplot(nwis_sites_df, aes(year_month, Mean)) +
+            print(plotly::ggplotly(ggplot(values$nwis_sites_df_month, aes(year_month, Mean)) +
               geom_line(size = .5) +
               geom_point() + geom_smooth(alpha = 0.1,  se = TRUE) +
-              labs(title = paste0(nwis_sites_df$Station[1], " Monthly Mean Discharge (cfs)"),
+              labs(title = paste0(values$nwis_sites_df_month$Station[1], " Monthly Mean Discharge (cfs)"),
                    y = "Mean Discharge (cfs) per Month", x = "Water Year")+ theme_bw()))
 
           } else if (input$usgs_metric == "Median") {
 
-            print(plotly::ggplotly(ggplot(nwis_sites_df, aes(year_month, Median)) +
+            print(plotly::ggplotly(ggplot(values$nwis_sites_df_month, aes(year_month, Median)) +
               geom_line(size = .5) +
               geom_point() + geom_smooth(alpha = 0.1,  se = TRUE) +
-              labs(title = paste0(nwis_sites_df$Station[1], " Monthly Median Discharge (cfs)"),
+              labs(title = paste0(values$nwis_sites_df_month$Station[1], " Monthly Median Discharge (cfs)"),
                    y = "Median Discharge (cfs) per Month", x = "Water Year")+ theme_bw()))
           } else {"SOL"}
     
@@ -398,13 +428,13 @@ mod_station_server <- function(input, output, session, values){
       bflow <- values$nwis_sites_df  %>% 
       mutate(bf = lfstat::baseflow(Flow))
     }
-    bflow <- bflow %>% 
+    values$bflow <- bflow %>% 
       mutate(bf = lfstat::baseflow(Flow)) %>% 
       dplyr::group_by(wy) %>% 
       dplyr::mutate(bfi = bf/Flow) %>% 
       dplyr::summarise(bfi = mean(bfi, na.rm = T)) 
     
-    bf_flow_mk <- bflow %>% 
+    bf_flow_mk <- values$bflow %>% 
       dplyr::pull(bfi) %>% 
       Kendall::MannKendall() %>% broom::tidy() %>% 
       mutate(dplyr::across(is.numeric,round, 4))
@@ -412,7 +442,7 @@ mod_station_server <- function(input, output, session, values){
     validate(need(input$leaf_map_marker_click$id, 'Waiting for a Station to be clicked...'))
     
     bf_plot <- plotly::ggplotly(
-      ggplot(bflow, aes(wy, bfi)) + 
+      ggplot(values$bflow, aes(wy, bfi)) + 
         geom_point() + 
         geom_line() + 
         geom_smooth(method = 'lm') +
@@ -434,10 +464,11 @@ mod_station_server <- function(input, output, session, values){
   output$fdc <- plotly::renderPlotly({
 
     validate(need(input$leaf_map_marker_click$id, 'Waiting for a Station to be clicked...'))
-  
-    fdc_plot <- plotly::ggplotly(wildlandhydRo::plot_USGSfdc(values$nwis_sites_df) +
-                     labs(title = paste('Flow Duration Curve')))
     
+    get_fdc <- wildlandhydRo::plot_USGSfdc(values$nwis_sites_df)
+    values$fdc <- get_fdc$data
+    fdc_plot <- plotly::ggplotly(get_fdc +
+                     labs(title = paste('Flow Duration Curve')))
     print(fdc_plot)
   })
   
@@ -525,7 +556,7 @@ mod_station_server <- function(input, output, session, values){
         
          })
    
-  
+ 
   
 }
     
