@@ -220,11 +220,13 @@ mod_snotel_server <- function(input, output, session, values){
         )
       
       values$all_months <- TRUE
-      
-      rmarkdown::render(app_sys('app/www/snotel_stats.Rmd'))
-      
+   
+       future_promise(
+    rmarkdown::render(app_sys('app/www/snotel_stats.Rmd'))
+    )
     })
   })
+  
   
   # These render the .html files for the modal
   output$frame <- renderUI({
@@ -240,8 +242,8 @@ mod_snotel_server <- function(input, output, session, values){
     
     showModal(modalDialog(
       title = "Explore the Station",
-      easyClose = TRUE,
-      footer = NULL,
+      easyClose = FALSE,
+      footer = actionButton(ns('done'),'Done'),
       tags$style(
         type = 'text/css',
         '.modal-dialog {
@@ -324,14 +326,22 @@ mod_snotel_server <- function(input, output, session, values){
                                                                   downloadButton(ns('freq_sno'),'download csv')),
                                                          tabPanel(title = 'Forecast',
                                                                   DT::dataTableOutput(ns('nws_table')))),
-      )),
-      tags$div(class = 'btn-modal',actionButton(ns('done'), 'Done', class = 'btn-modal'))
+      ))
     ))
     
   })
   
   observeEvent(input$done, {
+    
     removeModal()
+    values$snotel_sites_df <- NULL
+    values$snotel_sites_df_month <- NULL
+    values$fdc <- NULL
+    values$freq <- NULL
+    values$peak_df <- NULL
+    rm(list=ls())
+    gc()
+    
   })
   
   dlHandler_cust <- function(event) {
@@ -753,6 +763,49 @@ app_server_snotel <- function( input, output, session ) {
   values <- reactiveValues()
   
   callModule(mod_snotel_server, "snotel_ui_1", values = values)
+  
+  
+}
+
+## To be copied in the UI
+# mod_station_ui("station_ui_1")
+
+## To be copied in the server
+# callModule(mod_station_server, "station_ui_1")
+#' The application User-Interface
+#' 
+#' @param request Internal parameter for `{shiny}`. 
+#'     DO NOT REMOVE.
+#' @import shiny
+#' @noRd
+app_ui_happ <- function(request) {
+  tagList(
+    # Leave this function for adding external resources
+    golem_add_external_resources(),
+    
+    # List the first level UI elements here 
+    shiny::navbarPage('hydroapps',
+                      tabPanel('USGS',
+                               mod_station_ui("station_ui_1")
+                      ),
+                      tabPanel('SNOTEL',mod_snotel_ui('snotel_ui_1')))
+  )
+}
+
+
+#' The application server-side
+#' 
+#' @param input,output,session Internal parameters for {shiny}. 
+#'     DO NOT REMOVE.
+#' @import shiny
+#' @importFrom utils write.csv
+#' @importFrom sf st_write
+#' @noRd
+app_server_happ <- function( input, output, session ) {
+  values = reactiveValues()
+
+  callModule(mod_station_server, "station_ui_1", values = values)
+  callModule(mod_snotel_server, 'snotel_ui_1', values = values)
   
   
 }

@@ -5,9 +5,10 @@ account: joshualerickson
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5408212
-bundleId: 5446227
+bundleId: 5462372
 url: https://joshualerickson.shinyapps.io/hydroapps/
-when: 1641605838.50346
-lastSyncTime: 1641605838.50346
+when: 1642024335.66313
+lastSyncTime: 1642024335.66313
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: LICENSE|LICENSE.md|README.md|README.Rmd|snotel_stats.html

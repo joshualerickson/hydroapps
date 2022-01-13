@@ -52,6 +52,12 @@ run_app <- function(app,
       ), 
       golem_opts = list(...))
     
+  } else if (app == 'happ'){
+    with_golem_options(
+    app = shinyApp(
+   ui = app_ui_happ,
+   server = app_server_happ
+    ), golem_opts = list(...))
   }
   
 }

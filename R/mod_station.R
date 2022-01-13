@@ -320,8 +320,15 @@ mod_station_server <- function(input, output, session, values){
     
     removeModal()
     values$nwis_sites_df <- NULL
+    values$nwis_sites_df_month <- NULL
+    values$bflow <- NULL
     values$peak_df <- NULL
+    values$fdc <- NULL
     values$freq <- NULL
+    
+    rm(list=ls())
+    gc()
+    
   })
 
   

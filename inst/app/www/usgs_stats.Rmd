@@ -500,37 +500,37 @@ plotly::ggplotly(peak_count)
 <br>
 <br>
 <center>
-## Zonal Stats
+<!-- ## Zonal Stats -->
 
-```{r, echo=FALSE, message=FALSE, error=FALSE,warning=F, fig.align='center'}
-basin_sf <- usgs_ggplot_data_not_filtered() %>%
-  dplyr::slice_head(n=1) %>% 
-  sf::st_as_sf(coords = c('long', 'lat'))
-basin <- basin_sf %>% wildlandhydRo::get_Basin()
-basin_stats <- wildlandhydRo::get_BasinStats(basin) %>% dplyr::select(-Date, -c(year:month_abb)) 
+<!-- ```{r, echo=FALSE, message=FALSE, error=FALSE,warning=F, fig.align='center'} -->
+<!-- basin_sf <- usgs_ggplot_data_not_filtered() %>% -->
+<!--   dplyr::slice_head(n=1) %>%  -->
+<!--   sf::st_as_sf(coords = c('long', 'lat')) -->
+<!-- basin <- basin_sf %>% wildlandhydRo::get_Basin() -->
+<!-- basin_stats <- wildlandhydRo::get_BasinStats(basin) %>% dplyr::select(-Date, -c(year:month_abb))  -->
 
-meta <- nhdplusTools::discover_nldi_characteristics('total') %>% .[['total']]
+<!-- meta <- nhdplusTools::discover_nldi_characteristics('total') %>% .[['total']] -->
 
-meta_df <- meta %>% dplyr::left_join(basin_stats %>% 
-                                       tidyr::pivot_longer(dplyr::starts_with('TOT_'), names_to = 'characteristic_id'), by = 'characteristic_id')
+<!-- meta_df <- meta %>% dplyr::left_join(basin_stats %>%  -->
+<!--                                        tidyr::pivot_longer(dplyr::starts_with('TOT_'), names_to = 'characteristic_id'), by = 'characteristic_id') -->
 
-leaf <- base_map() %>% 
-  leaflet::addCircleMarkers(data = basin_sf, color = 'red') %>% 
-  leaflet::addPolygons(data = basin_stats)
-  #                      popup = leafpop::popupTable(basin_stats %>% 
-  # dplyr::rename_with(~stringr::str_remove(., 'TOT_'), starts_with('TOT_')) %>% 
-  #                                                    dplyr::filter(stringr::str_detect('BFI|TWI'))))
-leaf
-```
+<!-- leaf <- base_map() %>%  -->
+<!--   leaflet::addCircleMarkers(data = basin_sf, color = 'red') %>%  -->
+<!--   leaflet::addPolygons(data = basin_stats) -->
+<!--   #                      popup = leafpop::popupTable(basin_stats %>%  -->
+<!--   # dplyr::rename_with(~stringr::str_remove(., 'TOT_'), starts_with('TOT_')) %>%  -->
+<!--   #                                                    dplyr::filter(stringr::str_detect('BFI|TWI')))) -->
+<!-- leaf -->
+<!-- ``` -->
 
 
-```{r, echo=FALSE, message=FALSE, error=FALSE,warning=F}
+<!-- ```{r, echo=FALSE, message=FALSE, error=FALSE,warning=F} -->
 
-DT::datatable(meta_df%>% 
-  dplyr::mutate(characteristic_id = stringr::str_remove(characteristic_id, 'TOT_')) %>% 
-    dplyr::select(characteristic_id, characteristic_description, value, units))
-```
-</center>
+<!-- DT::datatable(meta_df%>%  -->
+<!--   dplyr::mutate(characteristic_id = stringr::str_remove(characteristic_id, 'TOT_')) %>%  -->
+<!--     dplyr::select(characteristic_id, characteristic_description, value, units)) -->
+<!-- ``` -->
+<!-- </center> -->
 ## References
 
 De Cicco, L.A., Hirsch, R.M., Lorenz, D., Watkins, W.D., 2018, dataRetrieval: R packages for discovering and retrieving water data available from Federal hydrologic web services, <doi:10.5066/P9X4L3GE>  

@@ -407,7 +407,7 @@ g <- ggplot(data = joined_swes, aes(Date, value, color = name, linetype = name))
   ggplot2::labs(title = 'Last 30 days of SWE',
                 x = 'Date', y = 'SWE (in)')
   
-plotly::ggplotly(g)
+g
 }
 ```
 <br>
@@ -417,7 +417,7 @@ Current compared to historic.
 </center>
 <br>
 ```{r, echo=FALSE,warning=F, error=F, message=F, fig.align='center', fig.height=6, fig.width=10}
-ggplotly(summary_stats_day %>% 
+summary_stats_day %>% 
   group_by(month_day) %>% 
   slice(n=1) %>%
   mutate(julian_date = as.numeric(format(Date, "%j")),
@@ -432,120 +432,6 @@ ggplotly(summary_stats_day %>%
   scale_color_manual(values = c('red', 'green', 'blue')) +
   labs(x = 'Days since 10-01', y = 'SWE (in)', title = paste0(dv_report[1,]$wy, ' Water Year SWE'))+
   theme_bw()
-)
-```
-<br>
-<center>
-<h2>**Precipitation Trend**</h2>
-Current compared to historic.
-</center>
-<br>
-```{r, echo=FALSE,warning=F, error=F, message=F, fig.align='center', fig.height=6, fig.width=11.25}
-
-ggplotly(snotel_ggplot_data_not_filtered() %>% 
-           group_by(site_name, month_day) %>% 
-           summarise(quantiles = quantile(precipitation_cumulative, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
-                                                                           0.75,0.80, 0.90, 0.95), na.rm = TRUE),
-                     breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
-                                 "p80_va", "p90_va", "p95_va")) %>% 
-           pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
-           right_join(snotel_ggplot_data_not_filtered(), by = c("site_name", "month_day")) %>% 
-           mutate(across(contains("_va"), round, 1)) %>% 
-           ungroup() %>% 
-  mutate(julian_date = as.numeric(format(Date, "%j")),
-         julian_date = ifelse(julian_date >= 274, julian_date-274, (91+julian_date))) %>% 
-    pivot_longer(c("p50_va", "p75_va", "p25_va"), names_to = 'Percentiles') %>% 
-    mutate(Percentiles = forcats::fct_recode(Percentiles, '25%' = 'p25_va',
-                                    '50%' = 'p50_va',
-                                    '75%' = 'p75_va')) %>%
-  ggplot() +
-  geom_line(aes(julian_date, precipitation_cumulative, group = wy), alpha = 0.15)+
-    geom_line(aes(julian_date, value, group = Percentiles, color = Percentiles, label = month_day), size =.25) +
-    scale_color_manual(values = c('red', 'forestgreen', 'blue')) +
-  geom_line(data = snotel_ggplot_data_not_filtered()  %>% 
-              mutate(julian_date = as.numeric(format(Date, "%j")),
-                     julian_date = ifelse(julian_date >= 274, julian_date-274, (91+julian_date)))%>%
-              filter(wy %in% 2022),
-            aes(julian_date, precipitation_cumulative, shape = 'Current Cumulative Precipitation'), size = .5) +
-    
-  theme_bw() + xlim(c(1, 365))+ labs(y = 'Cumulative Precipitation (in)', x = 'Days since 10-01')) 
-
-```
-
-<br>
-<center>
-<h2>**Temperature Trend**</h2>
-Current compared to historic.
-</center>
-<br>
-
-```{r, echo=FALSE,warning=F, error=F, message=F, fig.align='center', fig.height=6, fig.width=10.5}
-
-ggplotly(snotel_ggplot_data_not_filtered() %>% 
-           group_by(site_name, month_day) %>% 
-           summarise(quantiles = quantile(temperature_mean, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
-                                                                           0.75,0.80, 0.90, 0.95), na.rm = TRUE),
-                     breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
-                                 "p80_va", "p90_va", "p95_va")) %>% 
-           pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
-           right_join(snotel_ggplot_data_not_filtered(), by = c("site_name", "month_day")) %>% 
-           mutate(across(contains("_va"), round, 1)) %>% 
-           ungroup() %>% 
-  mutate(julian_date = as.numeric(format(Date, "%j")),
-         julian_date = ifelse(julian_date >= 274, julian_date-274, (91+julian_date))) %>% 
-    pivot_longer(c("p50_va", "p75_va", "p25_va"), names_to = 'Percentiles') %>% 
-    mutate(Percentiles = forcats::fct_recode(Percentiles, '25%' = 'p25_va',
-                                    '50%' = 'p50_va',
-                                    '75%' = 'p75_va')) %>%
-  ggplot() +
-  geom_line(aes(julian_date, temperature_mean, group = wy), alpha = 0.05)+
-    geom_line(aes(julian_date, value, group = Percentiles, color = Percentiles, label = month_day), size =.25) +
-    scale_color_manual(values = c('red', 'forestgreen', 'blue')) +
-  geom_line(data = snotel_ggplot_data_not_filtered()  %>% 
-              mutate(julian_date = as.numeric(format(Date, "%j")),
-                     julian_date = ifelse(julian_date >= 274, julian_date-274, (91+julian_date)))%>%
-              filter(wy %in% 2022),
-            aes(julian_date, temperature_mean, shape = 'Current Mean Temp'), size = .5) +
-    
-  theme_bw() + labs(y = 'Mean Daily Temperature (f)', x = 'Days since 10-01'))
-
-```
-<br>
-<center>
-<h2>**Snow Depth Trend**</h2>
-Current compared to historic.
-</center>
-<br>
-
-```{r, echo=FALSE,warning=F, error=F, message=F, fig.align='center', fig.height=6, fig.width=10.5}
-
-ggplotly(snotel_ggplot_data_not_filtered() %>% 
-           group_by(site_name, month_day) %>% 
-           summarise(quantiles = quantile(snow_depth, probs = c(0.05, 0.1, 0.2, 0.25, 0.5,
-                                                                           0.75,0.80, 0.90, 0.95), na.rm = TRUE),
-                     breaks =  c("p05_va", "p10_va", "p20_va", "p25_va", "p50_va", "p75_va",
-                                 "p80_va", "p90_va", "p95_va")) %>% 
-           pivot_wider(values_from = quantiles, names_from = breaks)  %>% 
-           right_join(snotel_ggplot_data_not_filtered(), by = c("site_name", "month_day")) %>% 
-           mutate(across(contains("_va"), round, 1)) %>% 
-           ungroup() %>% 
-  mutate(julian_date = as.numeric(format(Date, "%j")),
-         julian_date = ifelse(julian_date >= 274, julian_date-274, (91+julian_date))) %>% 
-    pivot_longer(c("p50_va", "p75_va", "p25_va"), names_to = 'Percentiles') %>% 
-    mutate(Percentiles = forcats::fct_recode(Percentiles, '25%' = 'p25_va',
-                                    '50%' = 'p50_va',
-                                    '75%' = 'p75_va')) %>%
-  ggplot() +
-  geom_line(aes(julian_date, snow_depth, group = wy), alpha = 0.15)+
-    geom_line(aes(julian_date, value, group = Percentiles, color = Percentiles, label = month_day), size =.25) +
-    scale_color_manual(values = c('red', 'forestgreen', 'blue')) +
-  geom_line(data = snotel_ggplot_data_not_filtered()  %>% 
-              mutate(julian_date = as.numeric(format(Date, "%j")),
-                     julian_date = ifelse(julian_date >= 274, julian_date-274, (91+julian_date)))%>%
-              filter(wy %in% 2022),
-            aes(julian_date, snow_depth, shape = 'Current Snow Depth'), size = .5) +
-    
-  theme_bw() + labs(y = 'Snow Depth (in)', x = 'Days since 10-01'))
 
 ```
 

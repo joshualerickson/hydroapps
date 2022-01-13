@@ -133,7 +133,7 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
       data_sf <- tibble(Lat = clat, Lon = clng)
       data_sf <- data_sf %>% sf::st_as_sf(coords = c('Lon', 'Lat')) %>%
         sf::st_set_crs(4326) %>% 
-        sf::st_transform(crs = crs)
+        sf::st_transform(crs = 4326)
    df_poly <-  tryCatch({
          wildlandhydRo::batch_StreamStats(data_sf)
       },
