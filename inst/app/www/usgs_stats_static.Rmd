@@ -197,7 +197,7 @@ dv_today_gt %>%
   gt::tab_header(
     title = gt::md("**Percentiles:**"),
     subtitle = gt::md("**Daily Stats**")
-  ) %>% gt::fmt_missing(columns = vars(-Date)) %>% 
+  ) %>% gt::sub_missing(columns = c(-Date)) %>% 
   gt::tab_style(
     style = list(
       gt::cell_fill(color = "#FF0000", alpha = 0.5)
@@ -274,7 +274,7 @@ dv_today_gt %>%
   gt::tab_header(
     title = gt::md("**Percentiles:**"),
     subtitle = gt::md("**Daily Stats**")
-  ) %>% gt::fmt_missing(columns = vars(-`Month-Day`)) %>% 
+  ) %>% gt::sub_missing(columns = c(-`Month-Day`)) %>% 
   gt::tab_style(
     style = list(
       gt::cell_fill(color = "#FF0000", alpha = 0.5)
@@ -351,7 +351,7 @@ mv_stats_gt %>%
   gt::tab_header(
     title = '',
     subtitle = gt::md("**Monthly Stats**")
-  ) %>% gt::fmt_missing(columns = vars(-Month)) %>% 
+  ) %>% gt::sub_missing(columns = c(-Month)) %>% 
   gt::tab_style(
     style = list(
       gt::cell_fill(color = "#FF0000", alpha = 0.5)

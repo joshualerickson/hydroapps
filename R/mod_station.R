@@ -581,7 +581,7 @@ mod_station_server <- function(input, output, session, values){
 app_ui_station <- function(request) {
   tagList(
     # Leave this function for adding external resources
-    golem_add_external_resources(),
+    #golem_add_external_resources(),
     
     # List the first level UI elements here 
     fluidPage(

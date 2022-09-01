@@ -289,10 +289,19 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
         
         setProgress(1/2, detail = paste("Generating Map Image"))
         
+        remove_controls = c("zoomControl",
+                            "layersControl",
+                            "homeButton",
+                            "scaleBar",
+                            "drawToolbar",
+                            "easyButton")
         
-        mapview::mapshot(x = map_leaf()
-                         , file = file.path(tempdir(), "customleaf.png")
-        )
+        
+        # 
+        # mapview::mapshot(x = map_leaf(), 
+        #                  file = file.path(tempdir(), "customleaf.png")
+        # )
+        
         
       }
     )
@@ -350,7 +359,8 @@ mod_culvert_map_server <- function(input, output, session, ss_list, shape){
                            httr::write_disk(path = file.path(tempdir(),
                                                              "peak_tmp.json"),overwrite = TRUE))
         
-        if(error$status_code == 500){shinyalert::shinyalert(
+        if(error$status_code == 500){
+          shinyalert::shinyalert(
           title = "Server Error 500",
           text = "Internal Server Error, please try again later (1-2 minutes).",
           size = "s",
@@ -626,7 +636,7 @@ tags$div(class = 'btn-modal',actionButton('dis2', 'Done', class = 'btn-modal'))
           
           
           culvert_usgs <- culvert_usgs %>% dplyr::select(basin_char = Value, ReturnInterval) %>%
-            dplyr::mutate(source = "USGS Regression") %>% dplyr::filter(ReturnInterval %in% c(2, 25, 50, 100))}
+            dplyr::mutate(source = "USGS Regression") %>% dplyr::filter(ReturnInterval %in% c(2,10, 25, 50, 100))}
         
         together <- plyr::rbind.fill(culvert_method, culvert_usgs)
         
@@ -660,7 +670,7 @@ tags$div(class = 'btn-modal',actionButton('dis2', 'Done', class = 'btn-modal'))
       output$culvert_table <- DT::renderDataTable({
         
         DT::datatable(culvert()$together_long %>% 
-                        dplyr::filter(RI %in% c(50,100)) %>%
+                        dplyr::filter(RI %in% c(2,10,25,50,100)) %>%
                         dplyr::select(ReturnInterval,Source = source, Method, value, Size), options = list(pageLength = 25))
         
       })
@@ -703,7 +713,7 @@ tags$div(class = 'btn-modal',actionButton('dis2', 'Done', class = 'btn-modal'))
     
     final_cul <- reactive({
       
-      customleaf <- file.path(tempdir(), "customleaf.png")
+      #customleaf <- file.path(tempdir(), "customleaf.png")
       
       stats_usgs_cul <- ss_list$stats
       
@@ -712,8 +722,9 @@ tags$div(class = 'btn-modal',actionButton('dis2', 'Done', class = 'btn-modal'))
       drain_name <- input$drain_name
       
       list(together_long = together_long,
-           stats_usgs_cul = stats_usgs_cul, drain_name = drain_name,
-           customleaf = customleaf)
+           stats_usgs_cul = stats_usgs_cul, drain_name = drain_name
+           #customleaf = customleaf
+           )
     })
     
     output$report_culvert <- downloadHandler(

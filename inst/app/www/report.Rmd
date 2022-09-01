@@ -30,9 +30,13 @@ always_allow_html: true
     
     forUpdate <- final_cul()$stats_usgs_cul  %>% 
       dplyr::filter(stringr::str_detect(description, "Percentage of area covered by forest"))
-      
-togeth_sum_50 <- final_cul()$together_long %>% dplyr::filter(RI == 50, Method == "basin_char")%>% dplyr::summarise(mean = mean(value, na.rm = TRUE))
 
+togeth_sum_2 <- final_cul()$together_long %>% dplyr::filter(RI == 2, Method == "basin_char")%>% dplyr::summarise(mean = mean(value, na.rm = TRUE))
+
+togeth_sum_10 <- final_cul()$together_long %>% dplyr::filter(RI == 10, Method == "basin_char")%>% dplyr::summarise(mean = mean(value, na.rm = TRUE))
+    
+          
+togeth_sum_50 <- final_cul()$together_long %>% dplyr::filter(RI == 50, Method == "basin_char")%>% dplyr::summarise(mean = mean(value, na.rm = TRUE))
 
 
 togeth_sum_100 <- final_cul()$together_long %>% dplyr::filter(RI == 100, Method == "basin_char") %>% dplyr::summarise(mean = mean(value, na.rm = TRUE))
@@ -47,7 +51,7 @@ This report is used to analyze the flood frequency and potential culvert sizing 
  `r paste0("<b>Drainage Area: </b>", paste(daUpdate$value, " sq.mi"),
           "<br>","<b>Precipitation: </b>",paste(precipUpdate$value, " in."),
           "<br>","<b>Forest Cover: </b>",paste(forUpdate$value, " %"),
-          "<br>", "<b>Basin Characteristics Avg 50 year: </b>", paste(scales::comma(togeth_sum_50$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<li>",  "Culvert Size Recommended (50 yr): ", paste(culvert_size(togeth_sum_50$mean)), "</li>","<b>Basin Characteristics Avg 100 year: </b>", paste(scales::comma(togeth_sum_100$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<br>","<li>",  "Culvert Size Recommended (100 yr): ", paste(culvert_size(togeth_sum_100$mean)), "</li>")`
+          "<br>", "<b>Basin Characteristics Avg 2 year: </b>", paste(scales::comma(togeth_sum_2$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<li>",  "Culvert Size Recommended (2 yr): ", paste(culvert_size(togeth_sum_2$mean)), "</li>","<b>Basin Characteristics Avg 10 year: </b>", paste(scales::comma(togeth_sum_10$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<li>",  "Culvert Size Recommended (10 yr): ", paste(culvert_size(togeth_sum_10$mean)), "</li>","<b>Basin Characteristics Avg 50 year: </b>", paste(scales::comma(togeth_sum_50$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<li>",  "Culvert Size Recommended (50 yr): ", paste(culvert_size(togeth_sum_50$mean)), "</li>","<b>Basin Characteristics Avg 100 year: </b>", paste(scales::comma(togeth_sum_100$mean,2), " <sup>ft<sup>3</sup></sup>&frasl;<sub>s</sub>"),"<br>","<li>",  "Culvert Size Recommended (100 yr): ", paste(culvert_size(togeth_sum_100$mean)), "</li>")`
 
 
 
@@ -55,7 +59,7 @@ This report is used to analyze the flood frequency and potential culvert sizing 
 
 
 ```{r, echo=FALSE, fig.align='center', fig.cap="Catchment Area (blue polygon) above selected Drain Point (red)", fig.pos="bottom"}
-knitr::include_graphics(final_cul()$customleaf)
+#knitr::include_graphics(final_cul()$customleaf)
 ```
 
 The catchment characteristics are listed below in the table. Not all variables are used for flood frequency calculations but are added for the user to help capture the entire scope of the drainage. 
@@ -81,7 +85,7 @@ plotly::ggplotly(p1)
 Table below show the results from the calculations above using the USGS RRE, Omang, Parrett and Hull, and Parrett and Hull.
 
 ```{r, echo=FALSE}
-final_cul()$together_long %>% dplyr::filter(RI %in% c(50,100)) %>% dplyr::select(`Return Interval` = ReturnInterval,Source = source, Method, Value = value, Size) %>% kableExtra::kable() %>%
+final_cul()$together_long %>% dplyr::filter(RI %in% c(2,10,25,50,100)) %>% dplyr::select(`Return Interval` = ReturnInterval,Source = source, Method, Value = value, Size) %>% kableExtra::kable() %>%
   kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 

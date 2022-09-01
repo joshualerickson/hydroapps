@@ -438,8 +438,8 @@ golem_add_external_resources <- function(){
   tags$head(
     favicon(),
     bundle_resources(
-      path = app_sys('app/www'),
-      app_title = 'hydroapps'
+      path = app_sys('app/www')
+      #app_title = 'hydroapps'
     ),
     
     # Add here other external resources

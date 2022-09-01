@@ -183,22 +183,27 @@ This report provides numerous flow statistics at the USGS gauging station <b>`r 
 ```{r, echo=FALSE, warning=F, message=F, error=F}
 
 if(!is.null(hr_flow)){
-  dv_today <- dv_today %>% select(Date, p05_va:p95_va)%>% dplyr::rename(`5 %` = p05_va,
-                                       `10 %` = p10_va,
-                                       `20 %` = p20_va,
-                                       `25 %` = p25_va,
-                                       `50 %` = p50_va,
-                                       `75 %` = p75_va,
-                                       `80 %` = p80_va,
-                                       `90 %` = p90_va,
-                                       `95 %` = p95_va)
+  
+  dv_today <- dv_today %>% 
+              select(Date, p05_va:p95_va) %>% 
+              dplyr::rename(
+             `5 %` = p05_va,
+             `10 %` = p10_va,
+             `20 %` = p20_va,
+             `25 %` = p25_va,
+             `50 %` = p50_va,
+             `75 %` = p75_va,
+             `80 %` = p80_va,
+             `90 %` = p90_va,
+             `95 %` = p95_va)
+  
   dv_today_gt <- gt::gt(dv_today)
 
 dv_today_gt %>%
   gt::tab_header(
     title = gt::md("**Percentiles:**"),
     subtitle = gt::md("**Daily Stats**")
-  ) %>% gt::fmt_missing(columns = vars(-Date)) %>% 
+  ) %>% gt::sub_missing(columns = c(-Date)) %>% 
   gt::tab_style(
     style = list(
       gt::cell_fill(color = "#FF0000", alpha = 0.5)
@@ -275,7 +280,7 @@ dv_today_gt %>%
   gt::tab_header(
     title = gt::md("**Percentiles:**"),
     subtitle = gt::md("**Daily Stats**")
-  ) %>% gt::fmt_missing(columns = vars(-`Month-Day`)) %>% 
+  ) %>% gt::sub_missing(columns = vars(-`Month-Day`)) %>% 
   gt::tab_style(
     style = list(
       gt::cell_fill(color = "#FF0000", alpha = 0.5)
@@ -352,7 +357,7 @@ mv_stats_gt %>%
   gt::tab_header(
     title = '',
     subtitle = gt::md("**Monthly Stats**")
-  ) %>% gt::fmt_missing(columns = vars(-Month)) %>% 
+  ) %>% gt::sub_missing(columns = vars(-Month)) %>% 
   gt::tab_style(
     style = list(
       gt::cell_fill(color = "#FF0000", alpha = 0.5)
